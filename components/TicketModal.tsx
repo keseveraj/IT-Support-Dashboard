@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Monitor, Download, MessageSquare, CheckCircle, Clock, Shield, Wifi, Globe, Activity } from 'lucide-react';
+import { X, Monitor, Download, MessageSquare, CheckCircle, Clock, Shield, Wifi, Globe, Activity, Check, Copy } from 'lucide-react';
 import { Ticket, Priority, Status } from '../types';
 import SmartSuggestions from './SmartSuggestions';
 import EmailGenerator from './EmailGenerator';
@@ -12,6 +12,13 @@ interface TicketModalProps {
 
 const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStatus }) => {
   const [comment, setComment] = useState('');
+  const [emailCopied, setEmailCopied] = useState(false);
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText(ticket.user_email);
+    setEmailCopied(true);
+    setTimeout(() => setEmailCopied(false), 2000);
+  };
 
   // Safely parse comments (can be string, array, or undefined from Supabase)
   const getComments = () => {
@@ -191,7 +198,16 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-white/5">
                     <span className="text-gray-500 shrink-0 mr-2">Email</span>
-                    <span className="text-gray-900 dark:text-white font-medium truncate text-right" title={ticket.user_email}>{ticket.user_email}</span>
+                    <div className="flex items-center gap-2 min-w-0 justify-end flex-1">
+                      <span className="text-gray-900 dark:text-white font-medium truncate" title={ticket.user_email}>{ticket.user_email}</span>
+                      <button
+                        onClick={handleCopyEmail}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0"
+                        title="Copy email"
+                      >
+                        {emailCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex justify-between py-1 border-b border-gray-100 dark:border-white/5">
                     <span className="text-gray-500">PC Name</span>
