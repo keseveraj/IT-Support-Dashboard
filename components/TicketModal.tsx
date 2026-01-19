@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Monitor, Download, MessageSquare, CheckCircle, Clock, Shield, Wifi, Globe, Activity } from 'lucide-react';
 import { Ticket, Priority, Status } from '../types';
 import SmartSuggestions from './SmartSuggestions';
+import EmailGenerator from './EmailGenerator';
 
 interface TicketModalProps {
   ticket: Ticket;
@@ -198,6 +199,9 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                   </div>
                 </div>
               </div>
+
+              {/* Email Generator */}
+              <EmailGenerator ticket={ticket} />
 
               {/* Diagnostics */}
               <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
