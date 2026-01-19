@@ -154,3 +154,42 @@ export const createTicket = async (ticketData: CreateTicketData): Promise<{ succ
   const mockId = Math.floor(Math.random() * 10000);
   return { success: true, ticketNumber: `INC-${mockId}` };
 };
+
+// Create a new solution for Knowledge Base
+interface CreateSolutionData {
+  title: string;
+  issue_type: string;
+  symptoms: string;
+  steps: string[];
+}
+
+export const createSolution = async (solutionData: CreateSolutionData): Promise<{ success: boolean; error?: string }> => {
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('solutions')
+        .insert({
+          problem: solutionData.title,
+          title: solutionData.title,
+          issue_type: solutionData.issue_type,
+          symptoms: solutionData.symptoms,
+          solution: solutionData.steps.join('\n'),
+          steps: solutionData.steps,
+          success_rate: 0,
+          times_used: 0
+        });
+
+      if (error) {
+        console.error('Failed to create solution:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (e) {
+      console.error('Supabase error:', e);
+      return { success: false, error: 'Failed to add solution' };
+    }
+  }
+
+  return { success: true };
+};
