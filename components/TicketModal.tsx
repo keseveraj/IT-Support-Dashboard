@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Monitor, Download, MessageSquare, CheckCircle, Clock, Shield, Wifi, Globe, Activity } from 'lucide-react';
 import { Ticket, Priority, Status } from '../types';
+import SmartSuggestions from './SmartSuggestions';
 
 interface TicketModalProps {
   ticket: Ticket;
@@ -133,6 +134,9 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                   </div>
                 </div>
               </div>
+
+              {/* Smart Suggestions */}
+              <SmartSuggestions ticket={ticket} />
 
               {/* Comments */}
               <div>
