@@ -10,12 +10,26 @@ interface TicketModalProps {
 
 const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStatus }) => {
   const [comment, setComment] = useState('');
-  
+
+  // Safely parse comments (can be string, array, or undefined from Supabase)
+  const getComments = () => {
+    if (!ticket.comments) return [];
+    if (Array.isArray(ticket.comments)) return ticket.comments;
+    if (typeof ticket.comments === 'string') {
+      try {
+        return JSON.parse(ticket.comments);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+  const comments = getComments();
+
   const handleConnect = () => {
-    if (ticket.remote_tool && ticket.remote_id) {
-      const protocol = ticket.remote_tool.toLowerCase() === 'anydesk' ? 'anydesk' : 'teamviewer';
-      // In a real app, this would trigger the custom protocol
-      window.open(`${protocol}://${ticket.remote_id}`, '_self');
+    if (ticket.remote_id) {
+      // Open TeamViewer with the remote ID
+      window.open(`teamviewer10://control?device=${ticket.remote_id}`, '_self');
     }
   };
 
@@ -30,7 +44,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white dark:bg-dark-card w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-gray-100 dark:border-white/10">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5">
           <div>
@@ -50,36 +64,42 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* Left Column: Details */}
             <div className="lg:col-span-2 space-y-6">
-              
+
               {/* Remote Access Card - PROMINENT */}
               <div className="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-500/10 dark:to-blue-500/10 border border-primary-100 dark:border-primary-500/20 rounded-2xl p-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                       <Monitor className="text-primary-600 dark:text-primary-400" size={20} />
-                      Remote Access
+                      TeamViewer Remote Access
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                       Target: <span className="font-mono font-semibold">{ticket.computer_name}</span>
                     </p>
                   </div>
-                  {ticket.remote_id ? (
-                    <div className="text-right">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Session ID</div>
-                      <div className="text-2xl font-mono font-bold text-primary-700 dark:text-primary-300 tracking-wider">
-                        {ticket.remote_id}
-                      </div>
+                </div>
+
+                {/* TeamViewer Credentials */}
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="bg-white dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-white/10">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider mb-1">TeamViewer ID</div>
+                    <div className="text-xl font-mono font-bold text-primary-700 dark:text-primary-300 tracking-wider">
+                      {ticket.remote_id || 'Not Set'}
                     </div>
-                  ) : (
-                    <span className="px-3 py-1 bg-gray-200 dark:bg-white/10 rounded text-xs">No ID</span>
-                  )}
+                  </div>
+                  <div className="bg-white dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-white/10">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider mb-1">Password</div>
+                    <div className="text-xl font-mono font-bold text-primary-700 dark:text-primary-300 tracking-wider">
+                      {ticket.remote_password || 'Not Set'}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-6 flex gap-3">
-                  <button 
+                  <button
                     onClick={handleConnect}
                     disabled={!ticket.remote_id}
                     className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-bold text-lg shadow-lg shadow-primary-600/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -101,16 +121,15 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                     {ticket.description}
                   </p>
                   <div className="mt-4 flex gap-2">
-                     <span className="px-2 py-1 bg-gray-100 dark:bg-white/10 rounded text-xs text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10">
-                       {ticket.issue_type}
-                     </span>
-                     <span className={`px-2 py-1 rounded text-xs border ${
-                        ticket.priority === 'Urgent' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20' :
-                        ticket.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/20' :
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-white/10 rounded text-xs text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10">
+                      {ticket.issue_type}
+                    </span>
+                    <span className={`px-2 py-1 rounded text-xs border ${ticket.priority === 'Urgent' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20' :
+                      ticket.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/20' :
                         'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20'
-                     }`}>
-                       {ticket.priority} Priority
-                     </span>
+                      }`}>
+                      {ticket.priority} Priority
+                    </span>
                   </div>
                 </div>
               </div>
@@ -119,7 +138,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
               <div>
                 <h3 className="text-sm font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider mb-3">Activity</h3>
                 <div className="space-y-4">
-                  {ticket.comments.map((c) => (
+                  {comments.map((c) => (
                     <div key={c.id} className="flex gap-3">
                       <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center shrink-0">
                         <span className="text-xs font-bold text-gray-600 dark:text-gray-300">{c.author[0]}</span>
@@ -127,7 +146,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                       <div className="flex-1 bg-gray-50 dark:bg-white/5 p-3 rounded-lg rounded-tl-none border border-transparent dark:border-white/5">
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs font-bold text-gray-900 dark:text-white">{c.author}</span>
-                          <span className="text-xs text-gray-500">{new Date(c.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          <span className="text-xs text-gray-500">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <p className="text-sm text-gray-700 dark:text-gray-300">{c.text}</p>
                       </div>
@@ -135,7 +154,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                   ))}
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <textarea 
+                  <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Add an internal note..."
@@ -151,7 +170,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
 
             {/* Right Column: User Info & Actions */}
             <div className="space-y-6">
-              
+
               {/* User Info */}
               <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
                 <h3 className="text-sm font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider mb-4">Requester</h3>
@@ -204,17 +223,17 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
               {/* Actions */}
               <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-5 border border-gray-200 dark:border-white/5">
                 <h3 className="text-sm font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider mb-4">Actions</h3>
-                
+
                 <div className="space-y-3">
-                  <button 
+                  <button
                     onClick={() => onUpdateStatus(ticket.id, 'Resolved')}
                     className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold shadow-sm transition-colors flex items-center justify-center gap-2 shadow-green-600/20"
                   >
                     <CheckCircle size={18} />
                     Mark Resolved
                   </button>
-                  
-                  <select 
+
+                  <select
                     value={ticket.status}
                     onChange={(e) => onUpdateStatus(ticket.id, e.target.value as Status)}
                     className="w-full p-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"

@@ -3,12 +3,16 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import KnowledgeBase from './pages/KnowledgeBase';
 import Analytics from './pages/Analytics';
+import SubmitTicket from './pages/SubmitTicket';
 import Layout from './components/Layout';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isDark, setIsDark] = useState(false);
+
+  // Check if we're on the public /submit route
+  const isSubmitPage = window.location.pathname === '/submit';
 
   useEffect(() => {
     // Check local storage for session
@@ -46,6 +50,11 @@ const App: React.FC = () => {
     localStorage.removeItem('supabase-auth-token');
   };
 
+  // Public submit page - no login required
+  if (isSubmitPage) {
+    return <SubmitTicket />;
+  }
+
   if (!isAuthenticated) {
     return <Login onLoginSuccess={handleLogin} />;
   }
@@ -60,9 +69,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout 
-      currentPage={currentPage} 
-      onNavigate={setCurrentPage} 
+    <Layout
+      currentPage={currentPage}
+      onNavigate={setCurrentPage}
       onLogout={handleLogout}
       toggleTheme={toggleTheme}
       isDark={isDark}

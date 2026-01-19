@@ -14,8 +14,9 @@ export interface Ticket {
   status: Status;
   description: string;
   created_at: string;
-  remote_tool?: 'AnyDesk' | 'TeamViewer';
+  remote_tool?: 'TeamViewer';
   remote_id?: string;
+  remote_password?: string;
   comments: TicketComment[];
   attachment_url?: string;
 }

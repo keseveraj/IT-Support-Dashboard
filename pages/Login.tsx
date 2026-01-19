@@ -7,9 +7,9 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  // Pre-fill credentials for easier demo access
-  const [email, setEmail] = useState('admin@company.com');
-  const [password, setPassword] = useState('password');
+  // Pre-fill demo credentials for easier demo access
+  const [email, setEmail] = useState('demo@company.com');
+  const [password, setPassword] = useState('demo123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,13 +18,26 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setError(null);
 
+    // Demo Login Bypass
+    if (email === 'demo@company.com' && password === 'demo123') {
+      // Simulate network delay for realism
+      await new Promise(r => setTimeout(r, 800));
+      onLoginSuccess();
+      return;
+    }
+
     // If supabase is configured, try real auth
     if (supabase) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.error('Supabase auth error:', e);
+        // Fall through to demo login
       }
     } else {
       // Simulate login for demo
@@ -35,7 +48,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         return;
       }
     }
-    
+
     onLoginSuccess();
   };
 
@@ -56,23 +69,23 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               {error}
             </div>
           )}
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white placeholder-gray-400"
-                placeholder="admin@company.com"
+                placeholder="demo@company.com"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -82,8 +95,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold shadow-lg shadow-primary-600/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -92,7 +105,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         </form>
 
         <p className="text-center text-xs text-gray-400 dark:text-gray-500">
-          Demo Mode: Use any email & password
+          Demo: demo@company.com / demo123
         </p>
       </div>
     </div>

@@ -1,20 +1,18 @@
+/// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 import { Ticket, Solution } from '../types';
 
-// NOTE: In a real environment, these would come from process.env
-// We handle safe access to process.env to avoid ReferenceError in browser-only environments.
+// NOTE: using import.meta.env for Vite
 const getEnv = (key: string) => {
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env[key];
-  }
-  return '';
+  return import.meta.env[key] || '';
 };
 
-const SUPABASE_URL = getEnv('REACT_APP_SUPABASE_URL');
-const SUPABASE_KEY = getEnv('REACT_APP_SUPABASE_ANON_KEY');
+const SUPABASE_URL = getEnv('VITE_SUPABASE_URL');
+const SUPABASE_KEY = getEnv('VITE_SUPABASE_ANON_KEY');
 
-export const supabase = (SUPABASE_URL && SUPABASE_KEY) 
-  ? createClient(SUPABASE_URL, SUPABASE_KEY) 
+// Supabase connection - now enabled with proper tables
+export const supabase = (SUPABASE_URL && SUPABASE_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
 // Mock Data Generators for Demo Purpose
@@ -31,8 +29,9 @@ const generateMockTickets = (): Ticket[] => {
     status: ['New', 'In Progress', 'Resolved', 'Closed'][i % 4] as any,
     description: 'User is reporting slow system performance and inability to access shared drive.',
     created_at: new Date(Date.now() - Math.random() * 86400000 * 3).toISOString(), // Random time last 3 days
-    remote_tool: i % 3 === 0 ? 'AnyDesk' : 'TeamViewer',
+    remote_tool: 'TeamViewer',
     remote_id: `${Math.floor(Math.random() * 900000000) + 100000000}`,
+    remote_password: `${Math.random().toString(36).substring(2, 8)}`,
     comments: [
       { id: 'c1', author: 'System', text: 'Ticket created', timestamp: new Date().toISOString() }
     ]
@@ -64,8 +63,13 @@ const MOCK_SOLUTIONS: Solution[] = [
 
 export const fetchTickets = async (): Promise<Ticket[]> => {
   if (supabase) {
-    const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
-    if (!error && data) return data as Ticket[];
+    try {
+      const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
+      if (!error && data) return data as Ticket[];
+      console.warn('Supabase fetch failed or empty, falling back to mock data', error);
+    } catch (e) {
+      console.error('Supabase error:', e);
+    }
   }
   // Simulate delay
   await new Promise(r => setTimeout(r, 800));
@@ -74,8 +78,12 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
 
 export const fetchSolutions = async (): Promise<Solution[]> => {
   if (supabase) {
-    const { data, error } = await supabase.from('solutions').select('*');
-    if (!error && data) return data as Solution[];
+    try {
+      const { data, error } = await supabase.from('solutions').select('*');
+      if (!error && data) return data as Solution[];
+    } catch (e) {
+      console.error('Supabase error:', e);
+    }
   }
   return MOCK_SOLUTIONS;
 };
@@ -87,4 +95,62 @@ export const updateTicketStatus = async (id: string, status: string): Promise<vo
     const t = MOCK_TICKETS.find(t => t.id === id);
     if (t) t.status = status as any;
   }
+};
+
+// Create a new ticket (for public submission form)
+interface CreateTicketData {
+  user_name: string;
+  user_email: string;
+  department?: string;
+  computer_name?: string;
+  issue_type: string;
+  priority?: string;
+  description: string;
+  remote_id?: string;
+  remote_password?: string;
+}
+
+export const createTicket = async (ticketData: CreateTicketData): Promise<{ success: boolean; ticketNumber?: string; error?: string }> => {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .insert({
+          user_name: ticketData.user_name,
+          user_email: ticketData.user_email,
+          email: ticketData.user_email, // Also set email field for compatibility
+          department: ticketData.department || null,
+          computer_name: ticketData.computer_name || null,
+          issue_type: ticketData.issue_type,
+          priority: ticketData.priority || 'Normal',
+          status: 'New',
+          description: ticketData.description,
+          remote_id: ticketData.remote_id || null,
+          remote_password: ticketData.remote_password || null,
+          remote_tool: 'TeamViewer',
+          comments: JSON.stringify([{ id: 'c1', author: 'System', text: 'Ticket created via web form', timestamp: new Date().toISOString() }])
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Failed to create ticket:', error);
+        return { success: false, error: error.message };
+      }
+
+      const ticketNumber = `INC-${data.id}`;
+
+      // Update ticket_number field
+      await supabase.from('tickets').update({ ticket_number: ticketNumber }).eq('id', data.id);
+
+      return { success: true, ticketNumber };
+    } catch (e) {
+      console.error('Supabase error:', e);
+      return { success: false, error: 'Failed to submit ticket' };
+    }
+  }
+
+  // Mock fallback
+  const mockId = Math.floor(Math.random() * 10000);
+  return { success: true, ticketNumber: `INC-${mockId}` };
 };
