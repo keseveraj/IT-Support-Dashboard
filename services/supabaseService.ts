@@ -101,8 +101,8 @@ export const updateTicketStatus = async (id: string, status: string): Promise<vo
 interface CreateTicketData {
   user_name: string;
   user_email: string;
+  company_name?: string;
   department?: string;
-  computer_name?: string;
   issue_type: string;
   priority?: string;
   description: string;
@@ -119,8 +119,8 @@ export const createTicket = async (ticketData: CreateTicketData): Promise<{ succ
           user_name: ticketData.user_name,
           user_email: ticketData.user_email,
           email: ticketData.user_email, // Also set email field for compatibility
+          company_name: ticketData.company_name || null,
           department: ticketData.department || null,
-          computer_name: ticketData.computer_name || null,
           issue_type: ticketData.issue_type,
           priority: ticketData.priority || 'Normal',
           status: 'New',

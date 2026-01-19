@@ -6,8 +6,8 @@ const SubmitTicket: React.FC = () => {
     const [formData, setFormData] = useState({
         user_name: '',
         user_email: '',
+        company_name: '',
         department: '',
-        computer_name: '',
         issue_type: 'Software',
         priority: 'Normal',
         description: '',
@@ -51,7 +51,7 @@ const SubmitTicket: React.FC = () => {
                         IT Support will contact you shortly. Keep this number for reference.
                     </p>
                     <button
-                        onClick={() => { setSubmitted(false); setFormData({ user_name: '', user_email: '', department: '', computer_name: '', issue_type: 'Software', priority: 'Normal', description: '', remote_id: '', remote_password: '' }); }}
+                        onClick={() => { setSubmitted(false); setFormData({ user_name: '', user_email: '', company_name: '', department: '', issue_type: 'Software', priority: 'Normal', description: '', remote_id: '', remote_password: '' }); }}
                         className="mt-6 px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium text-gray-700 dark:text-white transition-colors"
                     >
                         Submit Another Ticket
@@ -106,6 +106,21 @@ const SubmitTicket: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company *</label>
+                            <select
+                                name="company_name"
+                                required
+                                value={formData.company_name}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white"
+                            >
+                                <option value="">Select Company</option>
+                                <option value="Company A">Company A</option>
+                                <option value="Company B">Company B</option>
+                                <option value="Company C">Company C</option>
+                            </select>
+                        </div>
+                        <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
                             <select
                                 name="department"
@@ -122,17 +137,6 @@ const SubmitTicket: React.FC = () => {
                                 <option value="Operations">Operations</option>
                                 <option value="Other">Other</option>
                             </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Computer Name</label>
-                            <input
-                                type="text"
-                                name="computer_name"
-                                value={formData.computer_name}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white"
-                                placeholder="PC-SALES-01"
-                            />
                         </div>
                     </div>
 
