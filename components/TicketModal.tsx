@@ -236,7 +236,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                   <select
                     value={ticket.status}
                     onChange={(e) => onUpdateStatus(ticket.id, e.target.value as Status)}
-                    className="w-full p-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white [&>option]:bg-white [&>option]:dark:bg-gray-800 [&>option]:text-gray-900 [&>option]:dark:text-white"
                   >
                     <option value="New">Status: New</option>
                     <option value="In Progress">Status: In Progress</option>
