@@ -189,9 +189,9 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-1 border-b border-gray-100 dark:border-white/5">
-                    <span className="text-gray-500">Email</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{ticket.user_email}</span>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-white/5">
+                    <span className="text-gray-500 shrink-0 mr-2">Email</span>
+                    <span className="text-gray-900 dark:text-white font-medium truncate text-right" title={ticket.user_email}>{ticket.user_email}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-gray-100 dark:border-white/5">
                     <span className="text-gray-500">PC Name</span>
