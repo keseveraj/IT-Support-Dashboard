@@ -1,0 +1,75 @@
+import React, { useState, useEffect } from 'react';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import KnowledgeBase from './pages/KnowledgeBase';
+import Analytics from './pages/Analytics';
+import Layout from './components/Layout';
+
+const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Check local storage for session
+    const session = localStorage.getItem('supabase-auth-token'); // Mock check
+    if (session) setIsAuthenticated(true);
+
+    // Check theme
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDark(true);
+    }
+  };
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem('supabase-auth-token', 'mock-token');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('supabase-auth-token');
+  };
+
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={handleLogin} />;
+  }
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'dashboard': return <Dashboard />;
+      case 'knowledge-base': return <KnowledgeBase />;
+      case 'analytics': return <Analytics />;
+      default: return <Dashboard />;
+    }
+  };
+
+  return (
+    <Layout 
+      currentPage={currentPage} 
+      onNavigate={setCurrentPage} 
+      onLogout={handleLogout}
+      toggleTheme={toggleTheme}
+      isDark={isDark}
+    >
+      {renderPage()}
+    </Layout>
+  );
+};
+
+export default App;
