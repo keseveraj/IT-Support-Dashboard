@@ -3,6 +3,7 @@ import { Search, Plus, Mail, Users, AlertCircle, Edit2, ShieldCheck, ShieldAlert
 import { fetchEmailAccounts, deleteEmailAccount } from '../services/supabaseService';
 import { EmailAccount } from '../types';
 import AddEmailAccountModal from '../components/AddEmailAccountModal';
+import M365HealthBanner from '../components/M365HealthBanner';
 
 const EmailAccounts: React.FC = () => {
     const [accounts, setAccounts] = useState<EmailAccount[]>([]);
