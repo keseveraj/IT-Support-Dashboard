@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, Copy, ThumbsUp, Plus, X, Check } from 'lucide-react';
-import { fetchSolutions, createSolution } from '../services/supabaseService';
+import { Search, ChevronDown, Copy, ThumbsUp, Plus, Trash2, Check } from 'lucide-react';
+import { fetchSolutions, deleteSolution } from '../services/supabaseService';
 import { Solution } from '../types';
+import AddSolutionModal from '../components/AddSolutionModal';
 
 const KnowledgeBase: React.FC = () => {
   const [solutions, setSolutions] = useState<Solution[]>([]);
@@ -9,12 +10,6 @@ const KnowledgeBase: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [newSolution, setNewSolution] = useState({
-    title: '',
-    issue_type: 'Software',
-    symptoms: '',
-    steps: ''
-  });
 
   useEffect(() => {
     fetchSolutions().then(setSolutions);
@@ -32,18 +27,16 @@ const KnowledgeBase: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleAddSolution = async () => {
-    const stepsArray = newSolution.steps.split('\n').filter(s => s.trim());
-    await createSolution({
-      title: newSolution.title,
-      issue_type: newSolution.issue_type,
-      symptoms: newSolution.symptoms,
-      steps: stepsArray
-    });
-    setShowAddModal(false);
-    setNewSolution({ title: '', issue_type: 'Software', symptoms: '', steps: '' });
-    // Refresh solutions
+  const handleAddSuccess = () => {
     fetchSolutions().then(setSolutions);
+  };
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this solution?')) {
+      await deleteSolution(id);
+      fetchSolutions().then(setSolutions);
+    }
   };
 
   const filteredSolutions = solutions.filter(s =>
@@ -101,11 +94,20 @@ const KnowledgeBase: React.FC = () => {
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{solution.symptoms}</p>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                   <div className="hidden md:block text-right">
                     <div className="text-sm font-bold text-gray-900 dark:text-white">{solution.success_rate || 0}%</div>
                     <div className="text-xs text-gray-500">Success Rate</div>
                   </div>
+
+                  <button
+                    onClick={(e) => handleDelete(solution.id, e)}
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    title="Delete Solution"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+
                   <div className={`p-2 rounded-full bg-gray-50 dark:bg-gray-800 transition-transform duration-300 ${expandedId === solution.id ? 'rotate-180' : ''}`}>
                     <ChevronDown size={20} className="text-gray-500" />
                   </div>
@@ -142,83 +144,13 @@ const KnowledgeBase: React.FC = () => {
       </div>
 
       {/* Add Solution Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add New Solution</h2>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
+      <AddSolutionModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={handleAddSuccess}
+      />
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
-                <input
-                  type="text"
-                  value={newSolution.title}
-                  onChange={(e) => setNewSolution({ ...newSolution, title: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none text-gray-900 dark:text-white"
-                  placeholder="e.g., Printer Offline Fix"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Issue Type</label>
-                <select
-                  value={newSolution.issue_type}
-                  onChange={(e) => setNewSolution({ ...newSolution, issue_type: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none text-gray-900 dark:text-white"
-                >
-                  <option value="Software">Software</option>
-                  <option value="Hardware">Hardware</option>
-                  <option value="Network">Network</option>
-                  <option value="Printer">Printer</option>
-                  <option value="Email">Email</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Symptoms *</label>
-                <input
-                  type="text"
-                  value={newSolution.symptoms}
-                  onChange={(e) => setNewSolution({ ...newSolution, symptoms: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none text-gray-900 dark:text-white"
-                  placeholder="e.g., Printer shows offline status"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resolution Steps * (one per line)</label>
-                <textarea
-                  rows={4}
-                  value={newSolution.steps}
-                  onChange={(e) => setNewSolution({ ...newSolution, steps: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none text-gray-900 dark:text-white resize-none"
-                  placeholder="Restart Print Spooler service&#10;Check cable connections&#10;Reinstall printer driver"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddSolution}
-                disabled={!newSolution.title || !newSolution.symptoms || !newSolution.steps}
-                className="flex-1 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add Solution
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </div >
   );
 };
 

@@ -238,3 +238,20 @@ export const addComment = async (ticketId: string, currentComments: any, newComm
   // Mock Update
   return { success: true, updatedComments: [] };
 };
+
+export const deleteSolution = async (id: string): Promise<{ success: boolean; error?: string }> => {
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('solutions').delete().eq('id', id);
+      if (error) {
+        console.error('Failed to delete solution:', error);
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Supabase error:', e);
+      return { success: false, error: 'Failed to delete solution' };
+    }
+  }
+  return { success: true };
+};

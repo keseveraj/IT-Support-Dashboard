@@ -4,6 +4,7 @@ import { Ticket, Priority, Status } from '../types';
 import { addComment } from '../services/supabaseService';
 import SmartSuggestions from './SmartSuggestions';
 import EmailGenerator from './EmailGenerator';
+import AddSolutionModal from './AddSolutionModal';
 
 interface TicketModalProps {
   ticket: Ticket;
@@ -14,6 +15,7 @@ interface TicketModalProps {
 const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStatus }) => {
   const [comment, setComment] = useState('');
   const [emailCopied, setEmailCopied] = useState(false);
+  const [showAddSolution, setShowAddSolution] = useState(false);
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(ticket.user_email);
@@ -307,7 +309,12 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                   </select>
 
                   <label className="flex items-center gap-2 p-2 cursor-pointer group">
-                    <input type="checkbox" className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-transparent dark:border-white/30" />
+                    <input
+                      type="checkbox"
+                      checked={showAddSolution}
+                      onChange={() => setShowAddSolution(true)}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-transparent dark:border-white/30"
+                    />
                     <span className="text-sm text-gray-600 dark:text-gray-300 group-hover:text-primary-600 transition-colors">Add to Knowledge Base</span>
                   </label>
                 </div>
@@ -317,6 +324,18 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
           </div>
         </div>
       </div>
+
+      <AddSolutionModal
+        isOpen={showAddSolution}
+        onClose={() => setShowAddSolution(false)}
+        onSuccess={() => setShowAddSolution(false)}
+        initialData={{
+          title: `${ticket.issue_type} Issue`,
+          issue_type: ticket.issue_type,
+          symptoms: ticket.description,
+          steps: ''
+        }}
+      />
     </div>
   );
 };
