@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Monitor, Download, MessageSquare, CheckCircle, Clock, Shield, Wifi, Globe, Activity, Check, Copy } from 'lucide-react';
 import { Ticket, Priority, Status } from '../types';
+import { addComment } from '../services/supabaseService';
 import SmartSuggestions from './SmartSuggestions';
 import EmailGenerator from './EmailGenerator';
 
@@ -21,7 +22,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
   };
 
   // Safely parse comments (can be string, array, or undefined from Supabase)
-  const getComments = () => {
+  const getInitialComments = () => {
     if (!ticket.comments) return [];
     if (Array.isArray(ticket.comments)) return ticket.comments;
     if (typeof ticket.comments === 'string') {
@@ -33,7 +34,33 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
     }
     return [];
   };
-  const comments = getComments();
+
+  const [localComments, setLocalComments] = useState(getInitialComments());
+
+  // Update local comments if ticket prop changes
+  React.useEffect(() => {
+    setLocalComments(getInitialComments());
+  }, [ticket]);
+
+  const handlePostComment = async () => {
+    if (!comment.trim()) return;
+
+    const newCommentText = comment;
+    setComment(''); // Clear input immediately
+
+    // Optimistic update
+    const newCommentObj = {
+      id: `temp-${Date.now()}`,
+      author: 'Admin',
+      text: newCommentText,
+      timestamp: new Date().toISOString()
+    };
+
+    setLocalComments([...localComments, newCommentObj]);
+
+    // Save to backend
+    await addComment(ticket.id, ticket.comments, newCommentText);
+  };
 
   const handleConnect = () => {
     if (ticket.remote_id) {
@@ -150,7 +177,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
               <div>
                 <h3 className="text-sm font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider mb-3">Activity</h3>
                 <div className="space-y-4">
-                  {comments.map((c) => (
+                  {localComments.map((c: any) => (
                     <div key={c.id} className="flex gap-3">
                       <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center shrink-0">
                         <span className="text-xs font-bold text-gray-600 dark:text-gray-300">{c.author[0]}</span>
@@ -169,11 +196,21 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handlePostComment();
+                      }
+                    }}
                     placeholder="Add an internal note..."
                     className="flex-1 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white placeholder-gray-400"
                     rows={2}
                   />
-                  <button className="px-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-xl font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
+                  <button
+                    onClick={handlePostComment}
+                    disabled={!comment.trim()}
+                    className="px-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-xl font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Post
                   </button>
                 </div>

@@ -193,3 +193,48 @@ export const createSolution = async (solutionData: CreateSolutionData): Promise<
 
   return { success: true };
 };
+
+export const addComment = async (ticketId: string, currentComments: any, newCommentText: string, author: string = 'Admin'): Promise<{ success: boolean; updatedComments?: any[] }> => {
+  if (supabase) {
+    try {
+      // Parse current comments
+      let commentsArray: any[] = [];
+      if (Array.isArray(currentComments)) {
+        commentsArray = currentComments;
+      } else if (typeof currentComments === 'string') {
+        try {
+          commentsArray = JSON.parse(currentComments);
+        } catch {
+          commentsArray = [];
+        }
+      }
+
+      const newComment = {
+        id: `c${Date.now()}`,
+        author,
+        text: newCommentText,
+        timestamp: new Date().toISOString()
+      };
+
+      const updatedComments = [...commentsArray, newComment];
+
+      const { error } = await supabase
+        .from('tickets')
+        .update({ comments: JSON.stringify(updatedComments) })
+        .eq('id', ticketId);
+
+      if (error) {
+        console.error('Failed to add comment:', error);
+        return { success: false };
+      }
+
+      return { success: true, updatedComments };
+    } catch (e) {
+      console.error('Error adding comment:', e);
+      return { success: false };
+    }
+  }
+
+  // Mock Update
+  return { success: true, updatedComments: [] };
+};
