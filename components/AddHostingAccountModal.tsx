@@ -20,12 +20,14 @@ const AddHostingAccountModal: React.FC<AddHostingAccountModalProps> = ({
 }) => {
     const [formData, setFormData] = useState<Partial<HostingAccount>>({
         provider_name: '',
-        account_url: '',
-        username: '',
-        password_encrypted: '', // In a real app, this should be encrypted
-        support_contact: '',
+        account_name: '',
+        company_name: '',
+        control_panel_url: '',
+        control_panel_username: '',
+        control_panel_password_encrypted: '',
+        support_email: '',
         monthly_cost: 0,
-        renewal_date: '',
+        expiry_date: '',
         status: 'Active',
         ...initialData
     });
@@ -38,12 +40,14 @@ const AddHostingAccountModal: React.FC<AddHostingAccountModalProps> = ({
         if (isOpen) {
             setFormData({
                 provider_name: '',
-                account_url: '',
-                username: '',
-                password_encrypted: '',
-                support_contact: '',
+                account_name: '',
+                company_name: '',
+                control_panel_url: '',
+                control_panel_username: '',
+                control_panel_password_encrypted: '',
+                support_email: '',
                 monthly_cost: 0,
-                renewal_date: '',
+                expiry_date: '',
                 status: 'Active',
                 ...initialData
             });
@@ -116,7 +120,7 @@ const AddHostingAccountModal: React.FC<AddHostingAccountModalProps> = ({
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2 space-y-2">
+                        <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Provider Name *</label>
                             <input
                                 type="text"
@@ -124,17 +128,43 @@ const AddHostingAccountModal: React.FC<AddHostingAccountModalProps> = ({
                                 required
                                 value={formData.provider_name}
                                 onChange={handleChange}
-                                placeholder="AWS, DigitalOcean, Hostinger..."
+                                placeholder="AWS, DigitalOcean..."
+                                className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Company *</label>
+                            <input
+                                type="text"
+                                name="company_name"
+                                required
+                                value={formData.company_name}
+                                onChange={handleChange}
+                                placeholder="Client Company..."
                                 className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
                             />
                         </div>
 
                         <div className="md:col-span-2 space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Login URL</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Name *</label>
+                            <input
+                                type="text"
+                                name="account_name"
+                                required
+                                value={formData.account_name}
+                                onChange={handleChange}
+                                placeholder="Main Production Server..."
+                                className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+                            />
+                        </div>
+
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Control Panel URL</label>
                             <input
                                 type="url"
-                                name="account_url"
-                                value={formData.account_url}
+                                name="control_panel_url"
+                                value={formData.control_panel_url}
                                 onChange={handleChange}
                                 placeholder="https://console.provider.com"
                                 className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
@@ -145,9 +175,9 @@ const AddHostingAccountModal: React.FC<AddHostingAccountModalProps> = ({
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Username *</label>
                             <input
                                 type="text"
-                                name="username"
+                                name="control_panel_username"
                                 required
-                                value={formData.username}
+                                value={formData.control_panel_username}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
                             />
@@ -158,8 +188,8 @@ const AddHostingAccountModal: React.FC<AddHostingAccountModalProps> = ({
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
-                                    name="password_encrypted"
-                                    value={formData.password_encrypted}
+                                    name="control_panel_password_encrypted"
+                                    value={formData.control_panel_password_encrypted}
                                     onChange={handleChange}
                                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
                                 />
@@ -189,22 +219,22 @@ const AddHostingAccountModal: React.FC<AddHostingAccountModalProps> = ({
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Renewal/Next Bill</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Expiry Date</label>
                             <input
                                 type="date"
-                                name="renewal_date"
-                                value={formData.renewal_date}
+                                name="expiry_date"
+                                value={formData.expiry_date}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
                             />
                         </div>
 
                         <div className="md:col-span-2 space-y-2">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Support Contact (Phone/Email)</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Support Email</label>
                             <input
                                 type="text"
-                                name="support_contact"
-                                value={formData.support_contact}
+                                name="support_email"
+                                value={formData.support_email}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
                             />
