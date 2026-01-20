@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Monitor, Printer, Smartphone, Server, AlertCircle, Edit2, Download } from 'lucide-react';
-import { fetchAssets } from '../services/supabaseService';
+import { Search, Plus, Monitor, Printer, Smartphone, Server, AlertCircle, Edit2, Download, Trash2 } from 'lucide-react';
+import { fetchAssets, deleteAsset } from '../services/supabaseService';
 import { Asset } from '../types';
 import AddAssetModal from '../components/AddAssetModal';
 
@@ -33,6 +33,14 @@ const Assets: React.FC = () => {
         e.stopPropagation(); // Prevent opening detail modal
         setEditingAsset(asset);
         setIsModalOpen(true);
+    };
+
+    const handleDeleteAsset = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (window.confirm('Are you sure you want to delete this asset?')) {
+            await deleteAsset(id);
+            loadAssets();
+        }
     };
 
     const handleAssetSuccess = () => {
@@ -240,6 +248,12 @@ const Assets: React.FC = () => {
                                                 >
                                                     <Edit2 size={16} />
                                                 </button>
+                                                <button
+                                                    onClick={(e) => handleDeleteAsset(e, asset.id)}
+                                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </td>
                                         </tr>
                                     );
@@ -267,16 +281,29 @@ const Assets: React.FC = () => {
                                 </h2>
                                 <p className="text-gray-500 dark:text-gray-400 mt-1">{selectedAsset.asset_type} • {selectedAsset.brand} {selectedAsset.model}</p>
                             </div>
-                            <button
-                                onClick={(e) => {
-                                    setSelectedAsset(null);
-                                    handleEditAsset(e, selectedAsset);
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
-                            >
-                                <Edit2 size={16} />
-                                Edit
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        setSelectedAsset(null);
+                                        handleEditAsset(e, selectedAsset);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                                >
+                                    <Edit2 size={16} />
+                                    Edit
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteAsset(e, selectedAsset.id);
+                                        setSelectedAsset(null);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                >
+                                    <Trash2 size={16} />
+                                    Delete
+                                </button>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-6 text-sm">
@@ -319,7 +346,8 @@ const Assets: React.FC = () => {
                         </button>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* Add/Edit Asset Modal */}
             <AddAssetModal
@@ -329,7 +357,7 @@ const Assets: React.FC = () => {
                 assetId={editingAsset?.id}
                 initialData={editingAsset}
             />
-        </div>
+        </div >
     );
 };
 

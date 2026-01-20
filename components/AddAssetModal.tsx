@@ -68,10 +68,17 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
         setLoading(true);
         setError('');
 
+        // Sanitize date fields
+        const assetData = {
+            ...formData,
+            purchase_date: formData.purchase_date || null,
+            warranty_expiry: formData.warranty_expiry || null
+        };
+
         try {
             const result = assetId
-                ? await updateAsset(assetId, formData)
-                : await createAsset(formData);
+                ? await updateAsset(assetId, assetData)
+                : await createAsset(assetData);
 
             if (result && result.success) {
                 onSuccess();

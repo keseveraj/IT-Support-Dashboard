@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Mail, Users, AlertCircle, Edit2, ShieldCheck, ShieldAlert, Filter, Download } from 'lucide-react';
-import { fetchEmailAccounts } from '../services/supabaseService';
+import { Search, Plus, Mail, Users, AlertCircle, Edit2, ShieldCheck, ShieldAlert, Filter, Download, Trash2 } from 'lucide-react';
+import { fetchEmailAccounts, deleteEmailAccount } from '../services/supabaseService';
 import { EmailAccount } from '../types';
 import AddEmailAccountModal from '../components/AddEmailAccountModal';
 
@@ -31,6 +31,14 @@ const EmailAccounts: React.FC = () => {
         e.stopPropagation();
         setEditingAccount(account);
         setIsModalOpen(true);
+    };
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (window.confirm('Are you sure you want to delete this email account?')) {
+            await deleteEmailAccount(id);
+            loadAccounts();
+        }
     };
 
     const companies = ['All', ...Array.from(new Set(accounts.map(a => a.company_name).filter(Boolean)))];
@@ -172,8 +180,9 @@ const EmailAccounts: React.FC = () => {
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${acc.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{acc.status}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-right flex justify-end gap-2">
                                             <button onClick={(e) => handleEdit(e, acc)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg text-gray-500"><Edit2 size={16} /></button>
+                                            <button onClick={(e) => handleDelete(e, acc.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500"><Trash2 size={16} /></button>
                                         </td>
                                     </tr>
                                 ))
@@ -188,7 +197,10 @@ const EmailAccounts: React.FC = () => {
                     <div className="bg-white dark:bg-dark-card rounded-2xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-start mb-6">
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedAccount.email_address}</h2>
-                            <button onClick={(e) => { setSelectedAccount(null); handleEdit(e, selectedAccount); }} className="text-primary-600 font-medium text-sm">Edit</button>
+                            <div className="flex gap-2">
+                                <button onClick={(e) => { setSelectedAccount(null); handleEdit(e, selectedAccount); }} className="text-primary-600 font-medium text-sm">Edit</button>
+                                <button onClick={(e) => { setSelectedAccount(null); handleDelete(e, selectedAccount.id); }} className="text-red-500 font-medium text-sm">Delete</button>
+                            </div>
                         </div>
                         <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
                             <p><strong>Type:</strong> {selectedAccount.email_type}</p>

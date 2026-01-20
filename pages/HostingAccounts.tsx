@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Cloud, Server, AlertCircle, Edit2, ExternalLink, Download } from 'lucide-react';
-import { fetchHostingAccounts } from '../services/supabaseService';
+import { Search, Plus, Cloud, Server, AlertCircle, Edit2, ExternalLink, Download, Trash2 } from 'lucide-react';
+import { fetchHostingAccounts, deleteHostingAccount } from '../services/supabaseService';
 import { HostingAccount } from '../types';
 import AddHostingAccountModal from '../components/AddHostingAccountModal';
 
@@ -32,6 +32,14 @@ const HostingAccounts: React.FC = () => {
         e.stopPropagation();
         setEditingAccount(account);
         setIsModalOpen(true);
+    };
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (window.confirm('Are you sure you want to delete this hosting account?')) {
+            await deleteHostingAccount(id);
+            loadAccounts();
+        }
     };
 
     const filtered = accounts.filter(acc =>
@@ -134,6 +142,7 @@ const HostingAccounts: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <button onClick={(e) => handleEdit(e, acc)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg text-gray-500"><Edit2 size={16} /></button>
+                                            <button onClick={(e) => handleDelete(e, acc.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500"><Trash2 size={16} /></button>
                                         </td>
                                     </tr>
                                 ))
@@ -155,7 +164,10 @@ const HostingAccounts: React.FC = () => {
                                     </a>
                                 )}
                             </h2>
-                            <button onClick={(e) => { setSelectedAccount(null); setShowPassword(false); handleEdit(e, selectedAccount); }} className="text-primary-600 font-medium text-sm">Edit</button>
+                            <div className="flex gap-2">
+                                <button onClick={(e) => { setSelectedAccount(null); setShowPassword(false); handleEdit(e, selectedAccount); }} className="text-primary-600 font-medium text-sm">Edit</button>
+                                <button onClick={(e) => { setSelectedAccount(null); setShowPassword(false); handleDelete(e, selectedAccount.id); }} className="text-red-500 font-medium text-sm">Delete</button>
+                            </div>
                         </div>
                         <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
                             <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl space-y-3">
