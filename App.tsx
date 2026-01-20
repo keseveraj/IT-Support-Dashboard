@@ -65,14 +65,15 @@ const App: React.FC = () => {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'dashboard': return <Dashboard />;
+      case 'dashboard': return <Analytics />;
+      case 'tickets': return <Dashboard />;
       case 'assets': return <Assets />;
       case 'email-accounts': return <EmailAccounts />;
       case 'domains': return <Domains />;
       case 'hosting-accounts': return <HostingAccounts />;
       case 'knowledge-base': return <KnowledgeBase />;
-      case 'analytics': return <Analytics />;
-      default: return <Dashboard />;
+      case 'knowledge-base': return <KnowledgeBase />;
+      default: return <Analytics />;
     }
   };
 

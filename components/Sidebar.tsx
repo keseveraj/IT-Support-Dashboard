@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Book, BarChart2, Settings, LogOut, LifeBuoy, Package, Mail, Globe, Cloud } from 'lucide-react';
+import { LayoutDashboard, Book, BarChart2, Settings, LogOut, LifeBuoy, Package, Mail, Globe, Cloud, Ticket } from 'lucide-react';
 
 interface SidebarProps {
   currentPage: string;
@@ -11,13 +11,12 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, onLogout, isOpen }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'tickets', label: 'Tickets', icon: Ticket },
     { id: 'assets', label: 'Assets', icon: Package },
     { id: 'email-accounts', label: 'Email Accounts', icon: Mail },
     { id: 'domains', label: 'Domains', icon: Globe },
     { id: 'hosting-accounts', label: 'Hosting', icon: Cloud },
     { id: 'knowledge-base', label: 'Knowledge Base', icon: Book },
-    { id: 'analytics', label: 'Analytics', icon: BarChart2 },
   ];
 
   return (
