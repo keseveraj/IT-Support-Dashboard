@@ -34,8 +34,12 @@ const KnowledgeBase: React.FC = () => {
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this solution?')) {
-      await deleteSolution(id);
-      fetchSolutions().then(setSolutions);
+      const result = await deleteSolution(id);
+      if (result.success) {
+        fetchSolutions().then(setSolutions);
+      } else {
+        alert('Failed to delete: ' + (result.error || 'Unknown error'));
+      }
     }
   };
 
