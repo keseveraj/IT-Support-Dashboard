@@ -68,9 +68,19 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
         setLoading(true);
         setError('');
 
-        // Sanitize date fields
+        const getCategory = (type: string = '') => {
+            const t = type.toLowerCase();
+            if (t === 'software') return 'Software';
+            if (t === 'network') return 'Network'; // Or Hardware? Let's stick to simple mapping or DB constraint?
+            // Assuming simplified categories: Hardware, Software, Network, Other
+            if (['laptop', 'desktop', 'printer', 'phone', 'tablet', 'server'].includes(t)) return 'Hardware';
+            return 'Other';
+        };
+
+        // Sanitize date fields and ensure category
         const assetData = {
             ...formData,
+            category: formData.category || getCategory(formData.asset_type || 'Laptop'),
             purchase_date: formData.purchase_date || null,
             warranty_expiry: formData.warranty_expiry || null
         };
