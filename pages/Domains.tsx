@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Globe, AlertCircle, Edit2, ShieldCheck, ShieldAlert, Timer } from 'lucide-react';
+import { Search, Plus, Globe, AlertCircle, Edit2, ShieldCheck, ShieldAlert, Timer, Download } from 'lucide-react';
 import { fetchDomains } from '../services/supabaseService';
 import { Domain } from '../types';
 import AddDomainModal from '../components/AddDomainModal';
@@ -51,6 +51,29 @@ const Domains: React.FC = () => {
         return { text: `${days} days left`, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' };
     };
 
+    const handleExport = () => {
+        const headers = ['Domain', 'Registrar', 'Expiry', 'Cost', 'Company', 'Status', 'Auto Renew'];
+        const rows = filtered.map(d => [
+            d.domain_name,
+            d.registrar,
+            d.expiry_date,
+            d.renewal_cost,
+            d.company_name,
+            d.status,
+            d.auto_renew ? 'Yes' : 'No'
+        ].map(cell => `"${cell || ''}"`).join(','));
+
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `domains_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
@@ -58,9 +81,14 @@ const Domains: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Domains</h1>
                     <p className="text-gray-500 dark:text-gray-400">Manage domain renewals and DNS</p>
                 </div>
-                <button onClick={handleAdd} className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/20">
-                    <Plus size={18} /> Add Domain
-                </button>
+                <div className="flex gap-3">
+                    <button onClick={handleExport} className="flex items-center gap-2 bg-white dark:bg-white/10 text-gray-700 dark:text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-white/20 transition-colors border border-gray-200 dark:border-white/10">
+                        <Download size={18} /> Export
+                    </button>
+                    <button onClick={handleAdd} className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/20">
+                        <Plus size={18} /> Add Domain
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm">
@@ -125,7 +153,7 @@ const Domains: React.FC = () => {
                                                     <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 text-xs font-medium"><AlertCircle size={14} /> Off</span>
                                                 }
                                             </td>
-                                            <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{d.renewal_cost ? `$${d.renewal_cost}` : '-'}</td>
+                                            <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{d.renewal_cost ? `RM ${d.renewal_cost}` : '-'}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${d.status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>{d.status}</span>
                                             </td>
@@ -153,7 +181,7 @@ const Domains: React.FC = () => {
                             <p><strong>Expiry:</strong> {selectedDomain.expiry_date}</p>
                             <p><strong>SSL Expiry:</strong> {selectedDomain.ssl_expiry_date || 'N/A'}</p>
                             <p><strong>Auto-Renew:</strong> {selectedDomain.auto_renew ? 'Yes' : 'No'}</p>
-                            <p><strong>Cost:</strong> ${selectedDomain.renewal_cost}</p>
+                            <p><strong>Cost:</strong> RM {selectedDomain.renewal_cost}</p>
                             <p><strong>Company:</strong> {selectedDomain.company_name}</p>
                             <p><strong>Status:</strong> {selectedDomain.status}</p>
                         </div>

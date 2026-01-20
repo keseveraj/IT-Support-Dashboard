@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Monitor, Printer, Smartphone, Server, AlertCircle, Edit2 } from 'lucide-react';
+import { Search, Plus, Monitor, Printer, Smartphone, Server, AlertCircle, Edit2, Download } from 'lucide-react';
 import { fetchAssets } from '../services/supabaseService';
 import { Asset } from '../types';
 import AddAssetModal from '../components/AddAssetModal';
@@ -77,6 +77,30 @@ const Assets: React.FC = () => {
         return { text: `${daysUntilExpiry} days`, color: 'text-green-500' };
     };
 
+    const handleExport = () => {
+        const headers = ['Asset Tag', 'Type', 'Brand', 'Model', 'Serial', 'Assigned To', 'Status', 'Location'];
+        const rows = filteredAssets.map(a => [
+            a.asset_tag,
+            a.asset_type,
+            a.brand,
+            a.model,
+            a.serial_number,
+            a.assigned_to_name,
+            a.status,
+            a.location
+        ].map(cell => `"${cell || ''}"`).join(','));
+
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `assets_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="p-6 space-y-6">
             {/* Header */}
@@ -85,13 +109,18 @@ const Assets: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">IT Assets</h1>
                     <p className="text-gray-500 dark:text-gray-400">Track and manage all company hardware and software</p>
                 </div>
-                <button
-                    onClick={handleAddAsset}
-                    className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-primary-600/20 hover:bg-primary-700 transition-colors"
-                >
-                    <Plus size={18} />
-                    Add Asset
-                </button>
+                <div className="flex gap-3">
+                    <button onClick={handleExport} className="flex items-center gap-2 bg-white dark:bg-white/10 text-gray-700 dark:text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-white/20 transition-colors border border-gray-200 dark:border-white/10">
+                        <Download size={18} /> Export
+                    </button>
+                    <button
+                        onClick={handleAddAsset}
+                        className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-primary-600/20 hover:bg-primary-700 transition-colors"
+                    >
+                        <Plus size={18} />
+                        Add Asset
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -194,9 +223,9 @@ const Assets: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${asset.status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                        asset.status === 'Broken' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                            asset.status === 'Disposed' ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' :
-                                                                'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                    asset.status === 'Broken' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                        asset.status === 'Disposed' ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' :
+                                                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                                                     }`}>
                                                     {asset.status}
                                                 </span>
@@ -230,8 +259,8 @@ const Assets: React.FC = () => {
                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                     {selectedAsset.asset_tag}
                                     <span className={`text-sm font-normal px-2.5 py-0.5 rounded-full ${selectedAsset.status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                            selectedAsset.status === 'Broken' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                                        selectedAsset.status === 'Broken' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                            'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                                         }`}>
                                         {selectedAsset.status}
                                     </span>

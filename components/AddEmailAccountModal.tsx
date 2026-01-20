@@ -188,7 +188,7 @@ const AddEmailAccountModal: React.FC<AddEmailAccountModalProps> = ({
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Cost</label>
                             <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
                                 <input
                                     type="number"
                                     name="monthly_cost"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Mail, Users, AlertCircle, Edit2, ShieldCheck, ShieldAlert, Filter } from 'lucide-react';
+import { Search, Plus, Mail, Users, AlertCircle, Edit2, ShieldCheck, ShieldAlert, Filter, Download } from 'lucide-react';
 import { fetchEmailAccounts } from '../services/supabaseService';
 import { EmailAccount } from '../types';
 import AddEmailAccountModal from '../components/AddEmailAccountModal';
@@ -44,6 +44,29 @@ const EmailAccounts: React.FC = () => {
         return matchesSearch && matchesCompany && matchesType;
     });
 
+    const handleExport = () => {
+        const headers = ['Email Address', 'Type', 'Company', 'User', 'Status', 'Cost', 'MFA'];
+        const rows = filtered.map(acc => [
+            acc.email_address,
+            acc.email_type,
+            acc.company_name,
+            acc.user_name,
+            acc.status,
+            acc.monthly_cost,
+            acc.mfa_enabled ? 'Yes' : 'No'
+        ].map(cell => `"${cell || ''}"`).join(','));
+
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `email_accounts_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
@@ -51,9 +74,14 @@ const EmailAccounts: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Email Accounts</h1>
                     <p className="text-gray-500 dark:text-gray-400">Manage M365 and cPanel email accounts</p>
                 </div>
-                <button onClick={handleAdd} className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/20">
-                    <Plus size={18} /> Add Account
-                </button>
+                <div className="flex gap-3">
+                    <button onClick={handleExport} className="flex items-center gap-2 bg-white dark:bg-white/10 text-gray-700 dark:text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-white/20 transition-colors border border-gray-200 dark:border-white/10">
+                        <Download size={18} /> Export
+                    </button>
+                    <button onClick={handleAdd} className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/20">
+                        <Plus size={18} /> Add Account
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm flex flex-col md:flex-row gap-4 justify-between">
@@ -140,7 +168,7 @@ const EmailAccounts: React.FC = () => {
                                                 <span className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs font-medium"><ShieldAlert size={14} /> Off</span>
                                             }
                                         </td>
-                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{acc.monthly_cost ? `$${acc.monthly_cost}` : '-'}</td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{acc.monthly_cost ? `RM ${acc.monthly_cost}` : '-'}</td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${acc.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{acc.status}</span>
                                         </td>
@@ -168,7 +196,7 @@ const EmailAccounts: React.FC = () => {
                             <p><strong>Company:</strong> {selectedAccount.company_name}</p>
                             <p><strong>Status:</strong> {selectedAccount.status}</p>
                             <p><strong>MFA:</strong> {selectedAccount.mfa_enabled ? 'Yes' : 'No'}</p>
-                            <p><strong>Cost:</strong> ${selectedAccount.monthly_cost}</p>
+                            <p><strong>Cost:</strong> RM {selectedAccount.monthly_cost}</p>
                             <p><strong>Size:</strong> {(selectedAccount.mailbox_size_mb || 0) / 1000} GB</p>
                         </div>
                         <button onClick={() => setSelectedAccount(null)} className="mt-6 w-full py-2 bg-gray-100 dark:bg-white/5 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">Close</button>
