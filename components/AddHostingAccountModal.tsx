@@ -256,26 +256,26 @@ const AddHostingAccountModal: React.FC<AddHostingAccountModalProps> = ({
                             </div>
                         </div>
 
-                    </div></div>
+                    </div>
 
-            <div className="p-6 border-t border-gray-100 dark:border-white/10 flex justify-end gap-3 shrink-0">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-6 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-xl transition-colors"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-lg shadow-primary-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                    <Save size={18} />
-                    {loading ? 'Saving...' : 'Save Account'}
-                </button>
-            </div>
-        </form>
+                    <div className="p-6 border-t border-gray-100 dark:border-white/10 flex justify-end gap-3 shrink-0">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-6 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-xl transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-lg shadow-primary-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                            <Save size={18} />
+                            {loading ? 'Saving...' : 'Save Account'}
+                        </button>
+                    </div>
+                </form>
             </div >
         </div >
     );
