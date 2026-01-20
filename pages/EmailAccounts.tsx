@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Mail, Users, AlertCircle, Edit2, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Search, Plus, Mail, Users, AlertCircle, Edit2, ShieldCheck, ShieldAlert, Filter } from 'lucide-react';
 import { fetchEmailAccounts } from '../services/supabaseService';
 import { EmailAccount } from '../types';
 import AddEmailAccountModal from '../components/AddEmailAccountModal';
@@ -10,6 +10,8 @@ const EmailAccounts: React.FC = () => {
     const [selectedAccount, setSelectedAccount] = useState<EmailAccount | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState<EmailAccount | undefined>(undefined);
+    const [filterCompany, setFilterCompany] = useState('All');
+    const [filterType, setFilterType] = useState('All');
 
     const loadAccounts = async () => {
         const data = await fetchEmailAccounts();
@@ -31,10 +33,16 @@ const EmailAccounts: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const filtered = accounts.filter(acc =>
-        acc.email_address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (acc.user_name || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const companies = ['All', ...Array.from(new Set(accounts.map(a => a.company_name).filter(Boolean)))];
+    const types = ['All', ...Array.from(new Set(accounts.map(a => a.email_type).filter(Boolean)))];
+
+    const filtered = accounts.filter(acc => {
+        const matchesSearch = acc.email_address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (acc.user_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCompany = filterCompany === 'All' || acc.company_name === filterCompany;
+        const matchesType = filterType === 'All' || acc.email_type === filterType;
+        return matchesSearch && matchesCompany && matchesType;
+    });
 
     return (
         <div className="p-6 space-y-6">
@@ -48,8 +56,34 @@ const EmailAccounts: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm">
-                <div className="max-w-md relative">
+            <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm flex flex-col md:flex-row gap-4 justify-between">
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    {/* Company Filter */}
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <select
+                            value={filterCompany}
+                            onChange={(e) => setFilterCompany(e.target.value)}
+                            className="w-full md:w-48 pl-10 pr-8 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white appearance-none cursor-pointer"
+                        >
+                            {companies.map(c => <option key={c} value={c}>{c === 'All' ? 'All Companies' : c}</option>)}
+                        </select>
+                    </div>
+
+                    {/* Type Filter */}
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className="w-full md:w-48 pl-10 pr-8 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white appearance-none cursor-pointer"
+                        >
+                            {types.map(t => <option key={t} value={t}>{t === 'All' ? 'All Types' : t}</option>)}
+                        </select>
+                    </div>
+                </div>
+
+                <div className="relative w-full md:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input
                         type="text"
@@ -68,6 +102,7 @@ const EmailAccounts: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Email Address</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Type</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Company</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">User</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">MFA</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Cost</th>
@@ -95,6 +130,7 @@ const EmailAccounts: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{acc.email_type}</td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300 font-medium">{acc.company_name}</td>
                                         <td className="px-6 py-4 flex items-center gap-2 text-gray-900 dark:text-white">
                                             <Users size={16} className="text-gray-400" /> {acc.user_name || '-'}
                                         </td>
