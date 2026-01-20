@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { createSolution } from '../services/supabaseService';
+import { createSolution, updateSolution } from '../services/supabaseService';
 
 interface AddSolutionModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    solutionId?: string; // Optional: if provided, update existing solution
     initialData?: {
         title: string;
         issue_type: string;
@@ -14,7 +15,7 @@ interface AddSolutionModalProps {
     };
 }
 
-const AddSolutionModal: React.FC<AddSolutionModalProps> = ({ isOpen, onClose, onSuccess, initialData }) => {
+const AddSolutionModal: React.FC<AddSolutionModalProps> = ({ isOpen, onClose, onSuccess, initialData, solutionId }) => {
     const [solution, setSolution] = useState({
         title: '',
         issue_type: 'Software',
@@ -43,12 +44,25 @@ const AddSolutionModal: React.FC<AddSolutionModalProps> = ({ isOpen, onClose, on
 
         setLoading(true);
         const stepsArray = solution.steps.split('\n').filter(s => s.trim());
-        await createSolution({
-            title: solution.title,
-            issue_type: solution.issue_type,
-            symptoms: solution.symptoms,
-            steps: stepsArray
-        });
+
+        if (solutionId) {
+            // Update existing
+            await updateSolution(solutionId, {
+                title: solution.title,
+                issue_type: solution.issue_type,
+                symptoms: solution.symptoms,
+                steps: stepsArray
+            });
+        } else {
+            // Create new
+            await createSolution({
+                title: solution.title,
+                issue_type: solution.issue_type,
+                symptoms: solution.symptoms,
+                steps: stepsArray
+            });
+        }
+
         setLoading(false);
         onSuccess();
         onClose();
@@ -60,7 +74,7 @@ const AddSolutionModal: React.FC<AddSolutionModalProps> = ({ isOpen, onClose, on
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 border border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add New Solution</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{solutionId ? 'Edit Solution' : 'Add New Solution'}</h2>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
                         <X size={20} className="text-gray-500" />
                     </button>
@@ -128,7 +142,7 @@ const AddSolutionModal: React.FC<AddSolutionModalProps> = ({ isOpen, onClose, on
                         disabled={loading || !solution.title || !solution.steps}
                         className="flex-1 py-3 px-4 bg-primary-600 text-white rounded-xl font-semibold shadow-lg shadow-primary-600/20 hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? 'Saving...' : 'Save Solution'}
+                        {loading ? 'Saving...' : (solutionId ? 'Update Solution' : 'Save Solution')}
                     </button>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, Copy, ThumbsUp, Plus, Trash2, Check } from 'lucide-react';
+
+import { Search, ChevronDown, Copy, ThumbsUp, Plus, Trash2, Check, Edit2 } from 'lucide-react';
 import { fetchSolutions, deleteSolution } from '../services/supabaseService';
 import { Solution } from '../types';
 import AddSolutionModal from '../components/AddSolutionModal';
@@ -10,6 +11,7 @@ const KnowledgeBase: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingSolution, setEditingSolution] = useState<Solution | null>(null);
 
   useEffect(() => {
     fetchSolutions().then(setSolutions);
@@ -43,6 +45,12 @@ const KnowledgeBase: React.FC = () => {
     }
   };
 
+  const handleEdit = (solution: Solution, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSolution(solution);
+    setShowAddModal(true);
+  };
+
   const filteredSolutions = solutions.filter(s =>
     (s.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (s.symptoms || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -56,7 +64,10 @@ const KnowledgeBase: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400">Common solutions and troubleshooting guides</p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => {
+            setEditingSolution(null);
+            setShowAddModal(true);
+          }}
           className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-primary-600/20 hover:bg-primary-700 transition-colors"
         >
           <Plus size={18} />
@@ -105,6 +116,14 @@ const KnowledgeBase: React.FC = () => {
                   </div>
 
                   <button
+                    onClick={(e) => handleEdit(solution, e)}
+                    className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                    title="Edit Solution"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+
+                  <button
                     onClick={(e) => handleDelete(solution.id, e)}
                     className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     title="Delete Solution"
@@ -150,8 +169,18 @@ const KnowledgeBase: React.FC = () => {
       {/* Add Solution Modal */}
       <AddSolutionModal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditingSolution(null);
+        }}
         onSuccess={handleAddSuccess}
+        solutionId={editingSolution?.id}
+        initialData={editingSolution ? {
+          title: editingSolution.title,
+          issue_type: editingSolution.issue_type,
+          symptoms: editingSolution.symptoms,
+          steps: Array.isArray(editingSolution.steps) ? editingSolution.steps.join('\n') : editingSolution.steps || ''
+        } : undefined}
       />
 
     </div >

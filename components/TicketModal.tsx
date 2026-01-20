@@ -16,6 +16,7 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
   const [comment, setComment] = useState('');
   const [emailCopied, setEmailCopied] = useState(false);
   const [showAddSolution, setShowAddSolution] = useState(false);
+  const [isSolutionAdded, setIsSolutionAdded] = useState(false);
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText(ticket.user_email);
@@ -311,11 +312,14 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
                   <label className="flex items-center gap-2 p-2 cursor-pointer group">
                     <input
                       type="checkbox"
-                      checked={showAddSolution}
-                      onChange={() => setShowAddSolution(true)}
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-transparent dark:border-white/30"
+                      checked={isSolutionAdded || showAddSolution}
+                      onChange={() => !isSolutionAdded && setShowAddSolution(true)}
+                      disabled={isSolutionAdded}
+                      className={`rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-transparent dark:border-white/30 ${isSolutionAdded ? 'cursor-not-allowed opacity-50' : ''}`}
                     />
-                    <span className="text-sm text-gray-600 dark:text-gray-300 group-hover:text-primary-600 transition-colors">Add to Knowledge Base</span>
+                    <span className={`text-sm text-gray-600 dark:text-gray-300 transition-colors ${isSolutionAdded ? 'line-through opacity-70' : 'group-hover:text-primary-600'}`}>
+                      {isSolutionAdded ? 'Added to Knowledge Base' : 'Add to Knowledge Base'}
+                    </span>
                   </label>
                 </div>
               </div>
@@ -328,7 +332,10 @@ const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpdateStat
       <AddSolutionModal
         isOpen={showAddSolution}
         onClose={() => setShowAddSolution(false)}
-        onSuccess={() => setShowAddSolution(false)}
+        onSuccess={() => {
+          setShowAddSolution(false);
+          setIsSolutionAdded(true);
+        }}
         initialData={{
           title: `${ticket.issue_type} Issue`,
           issue_type: ticket.issue_type,

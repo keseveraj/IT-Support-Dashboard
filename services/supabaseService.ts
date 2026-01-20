@@ -255,3 +255,34 @@ export const deleteSolution = async (id: string): Promise<{ success: boolean; er
   }
   return { success: true };
 };
+
+export const updateSolution = async (id: string, solutionData: Partial<CreateSolutionData>): Promise<{ success: boolean; error?: string }> => {
+  if (supabase) {
+    try {
+      const updatePayload: any = {};
+      if (solutionData.title) {
+        updatePayload.title = solutionData.title;
+        updatePayload.problem = solutionData.title;
+      }
+      if (solutionData.issue_type) updatePayload.issue_type = solutionData.issue_type;
+      if (solutionData.symptoms) updatePayload.symptoms = solutionData.symptoms;
+      if (solutionData.steps) {
+        updatePayload.steps = solutionData.steps;
+        updatePayload.solution = solutionData.steps.join('\n');
+      }
+
+      const { error } = await supabase.from('solutions').update(updatePayload).eq('id', id);
+
+      if (error) {
+        console.error('Failed to update solution:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (e) {
+      console.error('Supabase error:', e);
+      return { success: false, error: 'Failed to update solution' };
+    }
+  }
+  return { success: true };
+};
