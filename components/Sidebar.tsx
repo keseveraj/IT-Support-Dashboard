@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Book, BarChart2, Settings, LogOut, LifeBuoy } from 'lucide-react';
+import { LayoutDashboard, Book, BarChart2, Settings, LogOut, LifeBuoy, Package, Mail, Globe, Cloud } from 'lucide-react';
 
 interface SidebarProps {
   currentPage: string;
@@ -11,6 +11,11 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, onLogout, isOpen }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'assets', label: 'Assets', icon: Package },
+    { id: 'email-accounts', label: 'Email Accounts', icon: Mail },
+    { id: 'domains', label: 'Domains', icon: Globe },
+    { id: 'hosting-accounts', label: 'Hosting', icon: Cloud },
     { id: 'knowledge-base', label: 'Knowledge Base', icon: Book },
     { id: 'analytics', label: 'Analytics', icon: BarChart2 },
   ];
@@ -43,8 +48,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, onLogout, is
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200
-                  ${isActive 
-                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                  ${isActive
+                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                   }
                 `}
@@ -61,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, onLogout, is
               <Settings size={20} />
               Settings
             </button>
-            <button 
+            <button
               onClick={onLogout}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 dark:hover:text-red-400 transition-colors"
             >

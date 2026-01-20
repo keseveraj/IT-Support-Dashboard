@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
-import { Ticket, Solution } from '../types';
+import { Ticket, Solution, Asset, EmailAccount, Domain, HostingAccount } from '../types';
 
 // NOTE: using import.meta.env for Vite
 const getEnv = (key: string) => {
@@ -283,6 +283,206 @@ export const updateSolution = async (id: string, solutionData: Partial<CreateSol
       console.error('Supabase error:', e);
       return { success: false, error: 'Failed to update solution' };
     }
+  }
+  return { success: true };
+};
+
+// --- Asset Management ---
+
+export const fetchAssets = async () => {
+  if (supabase) {
+    const { data, error } = await supabase.from('assets').select('*').order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching assets:', error);
+      return [];
+    }
+    return data as Asset[];
+  }
+  return [];
+};
+
+export const createAsset = async (asset: Partial<Asset>) => {
+  if (supabase) {
+    const { data, error } = await supabase.from('assets').insert(asset).select().single();
+    if (error) {
+      console.error('Error creating asset:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  }
+  return { success: true };
+};
+
+export const updateAsset = async (id: string, updates: Partial<Asset>) => {
+  if (supabase) {
+    const { error } = await supabase.from('assets').update(updates).eq('id', id);
+    if (error) {
+      console.error('Error updating asset:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+  return { success: true };
+};
+
+export const deleteAsset = async (id: string) => {
+  if (supabase) {
+    const { error } = await supabase.from('assets').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting asset:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+  return { success: true };
+};
+
+// --- Email Accounts Management ---
+
+export const fetchEmailAccounts = async () => {
+  if (supabase) {
+    const { data, error } = await supabase.from('email_accounts').select('*').order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching email accounts:', error);
+      return [];
+    }
+    return data as EmailAccount[];
+  }
+  return [];
+};
+
+export const createEmailAccount = async (account: Partial<EmailAccount>) => {
+  if (supabase) {
+    const { data, error } = await supabase.from('email_accounts').insert(account).select().single();
+    if (error) {
+      console.error('Error creating email account:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  }
+  return { success: true };
+};
+
+export const updateEmailAccount = async (id: string, updates: Partial<EmailAccount>) => {
+  if (supabase) {
+    const { error } = await supabase.from('email_accounts').update(updates).eq('id', id);
+    if (error) {
+      console.error('Error updating email account:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+  return { success: true };
+};
+
+export const deleteEmailAccount = async (id: string) => {
+  if (supabase) {
+    const { error } = await supabase.from('email_accounts').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting email account:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+  return { success: true };
+};
+
+// --- Domain Management ---
+
+export const fetchDomains = async () => {
+  if (supabase) {
+    const { data, error } = await supabase.from('domains').select('*').order('expiry_date', { ascending: true });
+    if (error) {
+      console.error('Error fetching domains:', error);
+      return [];
+    }
+    return data as Domain[];
+  }
+  return [];
+};
+
+export const createDomain = async (domain: Partial<Domain>) => {
+  if (supabase) {
+    const { data, error } = await supabase.from('domains').insert(domain).select().single();
+    if (error) {
+      console.error('Error creating domain:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  }
+  return { success: true };
+};
+
+export const updateDomain = async (id: string, updates: Partial<Domain>) => {
+  if (supabase) {
+    const { error } = await supabase.from('domains').update(updates).eq('id', id);
+    if (error) {
+      console.error('Error updating domain:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+  return { success: true };
+};
+
+export const deleteDomain = async (id: string) => {
+  if (supabase) {
+    const { error } = await supabase.from('domains').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting domain:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+  return { success: true };
+};
+
+// --- Hosting Accounts Management ---
+
+export const fetchHostingAccounts = async () => {
+  if (supabase) {
+    const { data, error } = await supabase.from('hosting_accounts').select('*').order('provider_name', { ascending: true });
+    if (error) {
+      console.error('Error fetching hosting accounts:', error);
+      return [];
+    }
+    return data as HostingAccount[];
+  }
+  return [];
+};
+
+export const createHostingAccount = async (account: Partial<HostingAccount>) => {
+  if (supabase) {
+    const { data, error } = await supabase.from('hosting_accounts').insert(account).select().single();
+    if (error) {
+      console.error('Error creating hosting account:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  }
+  return { success: true };
+};
+
+export const updateHostingAccount = async (id: string, updates: Partial<HostingAccount>) => {
+  if (supabase) {
+    const { error } = await supabase.from('hosting_accounts').update(updates).eq('id', id);
+    if (error) {
+      console.error('Error updating hosting account:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+  return { success: true };
+};
+
+export const deleteHostingAccount = async (id: string) => {
+  if (supabase) {
+    const { error } = await supabase.from('hosting_accounts').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting hosting account:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
   }
   return { success: true };
 };

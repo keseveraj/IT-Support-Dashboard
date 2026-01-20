@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Assets from './pages/Assets';
+import EmailAccounts from './pages/EmailAccounts';
+import Domains from './pages/Domains';
+import HostingAccounts from './pages/HostingAccounts';
 import KnowledgeBase from './pages/KnowledgeBase';
 import Analytics from './pages/Analytics';
 import SubmitTicket from './pages/SubmitTicket';
@@ -62,6 +66,10 @@ const App: React.FC = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard': return <Dashboard />;
+      case 'assets': return <Assets />;
+      case 'email-accounts': return <EmailAccounts />;
+      case 'domains': return <Domains />;
+      case 'hosting-accounts': return <HostingAccounts />;
       case 'knowledge-base': return <KnowledgeBase />;
       case 'analytics': return <Analytics />;
       default: return <Dashboard />;

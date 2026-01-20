@@ -1,0 +1,154 @@
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Mail, Users, AlertCircle, Edit2, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { fetchEmailAccounts } from '../services/supabaseService';
+import { EmailAccount } from '../types';
+import AddEmailAccountModal from '../components/AddEmailAccountModal';
+
+const EmailAccounts: React.FC = () => {
+    const [accounts, setAccounts] = useState<EmailAccount[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedAccount, setSelectedAccount] = useState<EmailAccount | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingAccount, setEditingAccount] = useState<EmailAccount | undefined>(undefined);
+
+    const loadAccounts = async () => {
+        const data = await fetchEmailAccounts();
+        setAccounts(data);
+    };
+
+    useEffect(() => {
+        loadAccounts();
+    }, []);
+
+    const handleAdd = () => {
+        setEditingAccount(undefined);
+        setIsModalOpen(true);
+    };
+
+    const handleEdit = (e: React.MouseEvent, account: EmailAccount) => {
+        e.stopPropagation();
+        setEditingAccount(account);
+        setIsModalOpen(true);
+    };
+
+    const filtered = accounts.filter(acc =>
+        acc.email_address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (acc.user_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Email Accounts</h1>
+                    <p className="text-gray-500 dark:text-gray-400">Manage M365 and cPanel email accounts</p>
+                </div>
+                <button onClick={handleAdd} className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/20">
+                    <Plus size={18} /> Add Account
+                </button>
+            </div>
+
+            <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/10 p-6 shadow-sm">
+                <div className="max-w-md relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Search email or user..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+                    />
+                </div>
+            </div>
+
+            <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
+                            <tr>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Email Address</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Type</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">User</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">MFA</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Cost</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-white/10">
+                            {filtered.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-12 text-center">
+                                        <AlertCircle className="mx-auto mb-3 text-gray-400" size={48} />
+                                        <p className="text-gray-500 dark:text-gray-400">No accounts found</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filtered.map((acc) => (
+                                    <tr key={acc.id} onClick={() => setSelectedAccount(acc)} className="hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg ${acc.email_type === 'M365' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400'}`}>
+                                                    <Mail size={20} />
+                                                </div>
+                                                <span className="font-semibold text-gray-900 dark:text-white">{acc.email_address}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{acc.email_type}</td>
+                                        <td className="px-6 py-4 flex items-center gap-2 text-gray-900 dark:text-white">
+                                            <Users size={16} className="text-gray-400" /> {acc.user_name || '-'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {acc.mfa_enabled ?
+                                                <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium"><ShieldCheck size={14} /> On</span> :
+                                                <span className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs font-medium"><ShieldAlert size={14} /> Off</span>
+                                            }
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{acc.monthly_cost ? `$${acc.monthly_cost}` : '-'}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${acc.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{acc.status}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button onClick={(e) => handleEdit(e, acc)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg text-gray-500"><Edit2 size={16} /></button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {selectedAccount && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAccount(null)}>
+                    <div className="bg-white dark:bg-dark-card rounded-2xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-start mb-6">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedAccount.email_address}</h2>
+                            <button onClick={(e) => { setSelectedAccount(null); handleEdit(e, selectedAccount); }} className="text-primary-600 font-medium text-sm">Edit</button>
+                        </div>
+                        <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                            <p><strong>Type:</strong> {selectedAccount.email_type}</p>
+                            <p><strong>User:</strong> {selectedAccount.user_name}</p>
+                            <p><strong>Company:</strong> {selectedAccount.company_name}</p>
+                            <p><strong>Status:</strong> {selectedAccount.status}</p>
+                            <p><strong>MFA:</strong> {selectedAccount.mfa_enabled ? 'Yes' : 'No'}</p>
+                            <p><strong>Cost:</strong> ${selectedAccount.monthly_cost}</p>
+                            <p><strong>Size:</strong> {(selectedAccount.mailbox_size_mb || 0) / 1000} GB</p>
+                        </div>
+                        <button onClick={() => setSelectedAccount(null)} className="mt-6 w-full py-2 bg-gray-100 dark:bg-white/5 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">Close</button>
+                    </div>
+                </div>
+            )}
+
+            <AddEmailAccountModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={loadAccounts}
+                accountId={editingAccount?.id}
+                initialData={editingAccount}
+            />
+        </div>
+    );
+};
+
+export default EmailAccounts;
