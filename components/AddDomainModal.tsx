@@ -75,9 +75,15 @@ const AddDomainModal: React.FC<AddDomainModalProps> = ({
         setError('');
 
         try {
+            // Convert empty dates to null for PostgreSQL
+            const dataToSave = {
+                ...formData,
+                ssl_expiry_date: formData.ssl_expiry_date || null
+            };
+
             const result = domainId
-                ? await updateDomain(domainId, formData)
-                : await createDomain(formData);
+                ? await updateDomain(domainId, dataToSave)
+                : await createDomain(dataToSave);
 
             if (result && result.success) {
                 onSuccess();
@@ -190,7 +196,7 @@ const AddDomainModal: React.FC<AddDomainModalProps> = ({
                                     step="0.01"
                                     value={formData.renewal_cost}
                                     onChange={handleChange}
-                                    className="w-full pl-8 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+                                    className="w-full pl-12 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
                                 />
                             </div>
                         </div>

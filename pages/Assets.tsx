@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Monitor, Printer, Smartphone, Server, AlertCircle, Edit2, Download, Trash2 } from 'lucide-react';
+import { Search, Plus, Monitor, Printer, Smartphone, Server, AlertCircle, Edit2, Download, Trash2, Users, DollarSign, Clock } from 'lucide-react';
 import { fetchAssets, deleteAsset } from '../services/supabaseService';
 import { Asset } from '../types';
 import AddAssetModal from '../components/AddAssetModal';
+
+const MetricCard = ({ title, value, subtext, icon: Icon, color }: any) => (
+    <div className="bg-white dark:bg-dark-card p-6 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
+        <div className="flex items-start justify-between">
+            <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{value}</h3>
+                {subtext && <p className="text-xs text-gray-400 mt-1">{subtext}</p>}
+            </div>
+            <div className={`p-3 rounded-xl ${color}`}>
+                <Icon size={20} />
+            </div>
+        </div>
+    </div>
+);
 
 const Assets: React.FC = () => {
     const [assets, setAssets] = useState<Asset[]>([]);
@@ -46,6 +61,34 @@ const Assets: React.FC = () => {
     const handleAssetSuccess = () => {
         loadAssets();
     };
+
+    const calculateMetrics = () => {
+        const totalAssets = assets.length;
+
+        // Count unique active users (by email)
+        const activeUsers = new Set(
+            assets
+                .filter(a => a.status === 'Active' && a.assigned_to_email)
+                .map(a => a.assigned_to_email)
+        ).size;
+
+        // Assets expiring in 30 days
+        const expiringSoon = assets.filter(a => {
+            if (!a.warranty_expiry) return false;
+            const expiry = new Date(a.warranty_expiry);
+            const today = new Date();
+            const diffTime = expiry.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 && diffDays <= 30;
+        }).length;
+
+        // Total Value
+        const totalValue = assets.reduce((sum, a) => sum + (a.purchase_price || 0), 0);
+
+        return { totalAssets, activeUsers, expiringSoon, totalValue };
+    };
+
+    const metrics = calculateMetrics();
 
     const filteredAssets = assets.filter(asset => {
         const matchesSearch =
@@ -129,6 +172,36 @@ const Assets: React.FC = () => {
                         Add Asset
                     </button>
                 </div>
+            </div>
+
+            {/* Overview Widgets */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <MetricCard
+                    title="Total Assets"
+                    value={metrics.totalAssets}
+                    icon={Server}
+                    color="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                />
+                <MetricCard
+                    title="Active Users"
+                    value={metrics.activeUsers}
+                    subtext="With assigned assets"
+                    icon={Users}
+                    color="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                />
+                <MetricCard
+                    title="Total Value"
+                    value={`RM ${metrics.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    icon={DollarSign}
+                    color="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                />
+                <MetricCard
+                    title="Expiring Soon"
+                    value={metrics.expiringSoon}
+                    subtext="Warranty within 30 days"
+                    icon={Clock}
+                    color="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+                />
             </div>
 
             {/* Filters */}

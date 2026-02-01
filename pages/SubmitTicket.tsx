@@ -8,17 +8,26 @@ const SubmitTicket: React.FC = () => {
         user_email: '',
         company_name: '',
         department: '',
+        computer_name: '',
         issue_type: 'Software',
         priority: 'Normal',
         description: '',
         remote_id: '',
         remote_password: '',
     });
+    const [customCompanyName, setCustomCompanyName] = useState('');
+    const [customDepartment, setCustomDepartment] = useState('');
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [ticketNumber, setTicketNumber] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        if (e.target.name === 'company_name' && e.target.value !== 'Others') {
+            setCustomCompanyName(''); // Reset custom company when selecting a predefined one
+        }
+        if (e.target.name === 'department' && e.target.value !== 'Others') {
+            setCustomDepartment(''); // Reset custom department when selecting a predefined one
+        }
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
@@ -26,7 +35,14 @@ const SubmitTicket: React.FC = () => {
         e.preventDefault();
         setLoading(true);
 
-        const result = await createTicket(formData);
+        // Use custom company name if 'Others' is selected
+        const submissionData = {
+            ...formData,
+            company_name: formData.company_name === 'Others' ? customCompanyName : formData.company_name,
+            department: formData.department === 'Others' ? customDepartment : formData.department
+        };
+
+        const result = await createTicket(submissionData);
 
         if (result.success) {
             setTicketNumber(result.ticketNumber || 'Submitted');
@@ -51,7 +67,7 @@ const SubmitTicket: React.FC = () => {
                         IT Support will contact you shortly. Keep this number for reference.
                     </p>
                     <button
-                        onClick={() => { setSubmitted(false); setFormData({ user_name: '', user_email: '', company_name: '', department: '', issue_type: 'Software', priority: 'Normal', description: '', remote_id: '', remote_password: '' }); }}
+                        onClick={() => { setSubmitted(false); setCustomCompanyName(''); setCustomDepartment(''); setFormData({ user_name: '', user_email: '', company_name: '', department: '', computer_name: '', issue_type: 'Software', priority: 'Normal', description: '', remote_id: '', remote_password: '' }); }}
                         className="mt-6 px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium text-gray-700 dark:text-white transition-colors"
                     >
                         Submit Another Ticket
@@ -115,10 +131,34 @@ const SubmitTicket: React.FC = () => {
                                 className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white"
                             >
                                 <option value="">Select Company</option>
-                                <option value="Company A">Company A</option>
-                                <option value="Company B">Company B</option>
-                                <option value="Company C">Company C</option>
+                                <option value="Graduan Bersatu Padat Sdn. Bhd.">Graduan Bersatu Padat Sdn. Bhd.</option>
+                                <option value="Greenfield Facility Management Sdn.Bhd.">Greenfield Facility Management Sdn.Bhd.</option>
+                                <option value="Bright Pest Service (M) Sdn Bhd">Bright Pest Service (M) Sdn Bhd</option>
+                                <option value="Revon Malaya">Revon Malaya</option>
+                                <option value="Apollo Logistic Sdn Bhd">Apollo Logistic Sdn Bhd</option>
+                                <option value="Max Health Pharma Sdn Bhd">Max Health Pharma Sdn Bhd</option>
+                                <option value="Bright Environment Sdn. Bhd.">Bright Environment Sdn. Bhd.</option>
+                                <option value="Cool Man Acond Service Sdn Bhd">Cool Man Acond Service Sdn Bhd</option>
+                                <option value="Bright Cleaning Service - Enterprise">Bright Cleaning Service - Enterprise</option>
+                                <option value="G Cleaning Services - Enterprise">G Cleaning Services - Enterprise</option>
+                                <option value="Kaw Kaw Kopitiam">Kaw Kaw Kopitiam</option>
+                                <option value="Telur Maju Setia">Telur Maju Setia</option>
+                                <option value="SBX Workshop">SBX Workshop</option>
+                                <option value="Pentalead Sdn. Bhd.">Pentalead Sdn. Bhd.</option>
+                                <option value="Lava's Holiday Sdn Bhd">Lava's Holiday Sdn Bhd</option>
+                                <option value="Healix Healthcare Sdn Bhd">Healix Healthcare Sdn Bhd</option>
+                                <option value="Others">Others</option>
                             </select>
+                            {formData.company_name === 'Others' && (
+                                <input
+                                    type="text"
+                                    value={customCompanyName}
+                                    onChange={(e) => setCustomCompanyName(e.target.value)}
+                                    required
+                                    className="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white"
+                                    placeholder="Enter company name"
+                                />
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
@@ -129,14 +169,26 @@ const SubmitTicket: React.FC = () => {
                                 className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white"
                             >
                                 <option value="">Select Department</option>
+                                <option value="IT">IT</option>
                                 <option value="HR">HR</option>
                                 <option value="Finance">Finance</option>
                                 <option value="Engineering">Engineering</option>
                                 <option value="Sales">Sales</option>
                                 <option value="Marketing">Marketing</option>
                                 <option value="Operations">Operations</option>
-                                <option value="Other">Other</option>
+                                <option value="Intern">Intern</option>
+                                <option value="Others">Others</option>
                             </select>
+                            {formData.department === 'Others' && (
+                                <input
+                                    type="text"
+                                    value={customDepartment}
+                                    onChange={(e) => setCustomDepartment(e.target.value)}
+                                    required
+                                    className="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white"
+                                    placeholder="Enter department name"
+                                />
+                            )}
                         </div>
                     </div>
 

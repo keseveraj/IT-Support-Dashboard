@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Cloud, Server, AlertCircle, Edit2, ExternalLink, Download, Trash2 } from 'lucide-react';
+import { Search, Plus, Cloud, Server, AlertCircle, Edit2, ExternalLink, Download, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { fetchHostingAccounts, deleteHostingAccount } from '../services/supabaseService';
 import { HostingAccount } from '../types';
 import AddHostingAccountModal from '../components/AddHostingAccountModal';
@@ -9,6 +9,18 @@ const HostingAccounts: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedAccount, setSelectedAccount] = useState<HostingAccount | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    const handleCopy = (text: string, field: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedField(field);
+        setTimeout(() => setCopiedField(null), 2000);
+    };
+
+    const handleOpenCPanel = (e: React.MouseEvent, url: string) => {
+        e.stopPropagation();
+        window.open(url, '_blank');
+    };
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -111,6 +123,7 @@ const HostingAccounts: React.FC = () => {
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Renewal</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Cost</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">cPanel</th>
                                 <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                             </tr>
                         </thead>
@@ -138,7 +151,20 @@ const HostingAccounts: React.FC = () => {
                                         <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{acc.renewal_date || '-'}</td>
                                         <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{acc.monthly_cost ? `RM ${acc.monthly_cost}` : '-'}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${acc.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{acc.status}</span>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${acc.status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>{acc.status}</span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {acc.control_panel_url ? (
+                                                <button
+                                                    onClick={(e) => handleOpenCPanel(e, acc.control_panel_url!)}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
+                                                >
+                                                    <ExternalLink size={12} />
+                                                    Open
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <button onClick={(e) => handleEdit(e, acc)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg text-gray-500"><Edit2 size={16} /></button>
@@ -170,20 +196,70 @@ const HostingAccounts: React.FC = () => {
                             </div>
                         </div>
                         <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
-                            <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl space-y-3">
-                                <p><strong>Username:</strong> {selectedAccount.username}</p>
-                                <div className="flex items-center gap-2">
-                                    <strong>Password:</strong>
-                                    <span className="font-mono">{showPassword ? selectedAccount.password_encrypted : '••••••••'}</span>
-                                    <button onClick={() => setShowPassword(!showPassword)} className="text-xs text-primary-600 hover:underline">{showPassword ? 'Hide' : 'Show'}</button>
+                            {/* cPanel Access Card */}
+                            {selectedAccount.control_panel_url && (
+                                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl p-5">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                                        <Server className="text-emerald-600" size={20} />
+                                        Control Panel Access
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div className="bg-white dark:bg-black/20 p-3 rounded-xl border border-gray-200 dark:border-white/10">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Username</div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-mono text-gray-900 dark:text-white">{selectedAccount.control_panel_username || selectedAccount.username}</span>
+                                                <button
+                                                    onClick={() => handleCopy(selectedAccount.control_panel_username || selectedAccount.username || '', 'username')}
+                                                    className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded"
+                                                >
+                                                    {copiedField === 'username' ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-400" />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white dark:bg-black/20 p-3 rounded-xl border border-gray-200 dark:border-white/10">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Password</div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-mono text-gray-900 dark:text-white">
+                                                    {showPassword ? (selectedAccount.control_panel_password_encrypted || selectedAccount.password_encrypted) : '••••••••'}
+                                                </span>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded"
+                                                    >
+                                                        {showPassword ? <EyeOff size={14} className="text-gray-400" /> : <Eye size={14} className="text-gray-400" />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleCopy(selectedAccount.control_panel_password_encrypted || selectedAccount.password_encrypted || '', 'password')}
+                                                        className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded"
+                                                    >
+                                                        {copiedField === 'password' ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-gray-400" />}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => window.open(selectedAccount.control_panel_url!, '_blank')}
+                                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <ExternalLink size={18} />
+                                        OPEN CONTROL PANEL
+                                    </button>
                                 </div>
+                            )}
+
+                            {/* Other Details */}
+                            <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl space-y-3">
+                                <p><strong>Provider:</strong> {selectedAccount.provider_name}</p>
+                                <p><strong>Account:</strong> {selectedAccount.account_name}</p>
+                                <p><strong>Support:</strong> {selectedAccount.support_email || '-'}</p>
+                                <p><strong>Renewal:</strong> {selectedAccount.expiry_date || '-'}</p>
+                                <p><strong>Cost:</strong> {selectedAccount.monthly_cost ? `RM ${selectedAccount.monthly_cost}` : '-'}</p>
+                                <p><strong>Status:</strong> {selectedAccount.status}</p>
                             </div>
-                            <p><strong>Support:</strong> {selectedAccount.support_contact}</p>
-                            <p><strong>Renewal:</strong> {selectedAccount.renewal_date}</p>
-                            <p><strong>Cost:</strong> RM {selectedAccount.monthly_cost}</p>
-                            <p><strong>Status:</strong> {selectedAccount.status}</p>
                         </div>
-                        <button onClick={() => { setSelectedAccount(null); setShowPassword(false); }} className="mt-6 w-full py-2 bg-gray-100 dark:bg-white/5 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">Close</button>
+                        <button onClick={() => { setSelectedAccount(null); setShowPassword(false); setCopiedField(null); }} className="mt-6 w-full py-2 bg-gray-100 dark:bg-white/5 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-colors text-gray-700 dark:text-gray-300">Close</button>
                     </div>
                 </div>
             )}

@@ -29,7 +29,9 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
         assigned_to_email: '',
         location: '',
         purchase_date: '',
+        purchase_price: '',
         warranty_expiry: '',
+        specifications: {},
         ...initialData
     });
 
@@ -49,8 +51,12 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 assigned_to_email: '',
                 location: '',
                 purchase_date: '',
+                purchase_price: '',
                 warranty_expiry: '',
-                ...initialData
+                specifications: {},
+                ...initialData,
+                // If editing, map specific specs to top level for form handling if needed, 
+                // but let's handle it in the render logic or use a helper to extract specs
             });
             setError('');
         }
@@ -60,7 +66,17 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'ram' || name === 'storage') {
+            setFormData(prev => ({
+                ...prev,
+                specifications: {
+                    ...(prev.specifications || {}),
+                    [name]: value
+                }
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -82,6 +98,7 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
             ...formData,
             category: formData.category || getCategory(formData.asset_type || 'Laptop'),
             purchase_date: formData.purchase_date || null,
+            purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price.toString()) : null,
             warranty_expiry: formData.warranty_expiry || null
         };
 
@@ -163,6 +180,33 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
                                 <option value="Other">Other</option>
                             </select>
                         </div>
+
+                        {(formData.asset_type === 'Laptop' || formData.asset_type === 'Desktop') && (
+                            <>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">RAM</label>
+                                    <input
+                                        type="text"
+                                        name="ram"
+                                        value={formData.specifications?.ram || ''}
+                                        onChange={handleChange}
+                                        placeholder="e.g. 16GB"
+                                        className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Storage</label>
+                                    <input
+                                        type="text"
+                                        name="storage"
+                                        value={formData.specifications?.storage || ''}
+                                        onChange={handleChange}
+                                        placeholder="e.g. 512GB SSD"
+                                        className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                            </>
+                        )}
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Brand</label>
@@ -267,6 +311,23 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
                         </div>
 
                         <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Purchase Price</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">RM</span>
+                                <input
+                                    type="number"
+                                    name="purchase_price"
+                                    value={formData.purchase_price}
+                                    onChange={handleChange}
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="0.00"
+                                    className="w-full pl-12 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Warranty Expiry</label>
                             <input
                                 type="date"
@@ -296,8 +357,8 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
