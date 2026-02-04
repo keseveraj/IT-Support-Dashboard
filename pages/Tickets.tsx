@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, AlertCircle, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Search, Filter, Plus, AlertCircle, Clock, CheckCircle, XCircle, Eye, Download } from 'lucide-react';
 import { Ticket } from '../types';
 import { fetchTickets, updateTicketStatus } from '../services/supabaseService';
 import TicketModal from '../components/TicketModal';
@@ -74,6 +74,61 @@ const Tickets: React.FC = () => {
         }
     };
 
+    const exportToCSV = () => {
+        // CSV headers
+        const headers = [
+            'Ticket Number',
+            'Date Created',
+            'User Name',
+            'Email',
+            'Company',
+            'Department',
+            'Computer Name',
+            'Issue Type',
+            'Priority',
+            'Status',
+            'Description',
+            'TeamViewer ID',
+            'TeamViewer Password'
+        ];
+
+        // Convert filtered tickets to CSV rows
+        const csvData = filteredTickets.map(ticket => [
+            ticket.ticket_number || '',
+            ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : '',
+            ticket.user_name || '',
+            ticket.user_email || '',
+            ticket.company_name || '',
+            ticket.department || '',
+            ticket.computer_name || '',
+            ticket.issue_type || '',
+            ticket.priority || '',
+            ticket.status || '',
+            ticket.description ? `"${ticket.description.replace(/"/g, '""')}"` : '', // Escape quotes
+            ticket.remote_id || '',
+            ticket.remote_password || ''
+        ]);
+
+        // Combine headers and data
+        const csvContent = [
+            headers.join(','),
+            ...csvData.map(row => row.join(','))
+        ].join('\n');
+
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `tickets_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -82,14 +137,23 @@ const Tickets: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Support Tickets</h1>
                     <p className="text-gray-500 dark:text-gray-400">Manage and track all support requests</p>
                 </div>
-                <a
-                    href="/submit"
-                    target="_blank"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
-                >
-                    <Plus size={18} />
-                    New Ticket
-                </a>
+                <div className="flex gap-3">
+                    <button
+                        onClick={exportToCSV}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                    >
+                        <Download size={18} />
+                        Download CSV
+                    </button>
+                    <a
+                        href="/submit"
+                        target="_blank"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                    >
+                        <Plus size={18} />
+                        New Ticket
+                    </a>
+                </div>
             </div>
 
             {/* Stats Summary */}
