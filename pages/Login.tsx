@@ -32,13 +32,22 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       });
 
       if (error) {
+        // If Supabase auth fails, try fallback hardcoded login
+        // TODO: Remove this fallback once Supabase user is created
+        if (email === 'itsupport@graduanbersatu.com' && password === 'Raj-51121') {
+          console.warn('⚠️ Using fallback authentication. Please create Supabase user!');
+          onLoginSuccess();
+          return;
+        }
+
         setError('Invalid email or password');
         setLoading(false);
         return;
       }
 
       if (data.user) {
-        // Successful login
+        // Successful Supabase login
+        console.log('✅ Logged in with Supabase Auth');
         onLoginSuccess();
       }
     } catch (e) {
