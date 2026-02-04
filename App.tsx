@@ -11,6 +11,7 @@ import Analytics from './pages/Analytics';
 import SubmitTicket from './pages/SubmitTicket';
 import Layout from './components/Layout';
 import ChatbotWidget from './components/ChatbotWidget';
+import { supabase } from './services/supabaseService';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -21,9 +22,26 @@ const App: React.FC = () => {
   const isSubmitPage = window.location.pathname === '/submit';
 
   useEffect(() => {
-    // Check local storage for session
-    const session = localStorage.getItem('supabase-auth-token'); // Mock check
-    if (session) setIsAuthenticated(true);
+    // Check Supabase session
+    const checkSession = async () => {
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setIsAuthenticated(true);
+        }
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth state changes
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsAuthenticated(!!session);
+      });
+
+      return () => subscription.unsubscribe();
+    }
 
     // Check theme
     if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -48,12 +66,13 @@ const App: React.FC = () => {
 
   const handleLogin = () => {
     setIsAuthenticated(true);
-    localStorage.setItem('supabase-auth-token', 'mock-token');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setIsAuthenticated(false);
-    localStorage.removeItem('supabase-auth-token');
   };
 
   // Public submit page - no login required

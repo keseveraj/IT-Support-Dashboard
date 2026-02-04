@@ -18,36 +18,34 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setError(null);
 
-    // Admin Login Check
-    if (email === 'itsupport@graduanbersatu.com' && password === 'Raj-51121') {
-      // Simulate network delay for realism
-      await new Promise(r => setTimeout(r, 800));
-      onLoginSuccess();
+    // Use Supabase Authentication
+    if (!supabase) {
+      setError('Authentication service is not configured. Please contact support.');
+      setLoading(false);
       return;
     }
 
-    // If supabase is configured, try real auth
-    if (supabase) {
-      try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          setError('Invalid credentials');
-          setLoading(false);
-          return;
-        }
-      } catch (e) {
-        console.error('Supabase auth error:', e);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        setError('Invalid email or password');
+        setLoading(false);
+        return;
       }
-    }
 
-    // If we reach here, neither hardcoded admin nor Supabase auth worked (or Supabase wasn't configured)
-    // Add artificial delay if we didn't do Supabase auth to prevent timing attacks
-    if (!supabase) {
-      await new Promise(r => setTimeout(r, 800));
+      if (data.user) {
+        // Successful login
+        onLoginSuccess();
+      }
+    } catch (e) {
+      console.error('Authentication error:', e);
+      setError('An error occurred during login. Please try again.');
+      setLoading(false);
     }
-
-    setError('Invalid credentials');
-    setLoading(false);
   };
 
   return (
@@ -77,7 +75,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white placeholder-gray-400"
-                placeholder="admin@graduanbersatu.com"
+                placeholder="admin@company.com"
               />
             </div>
             <div>
