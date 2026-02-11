@@ -268,3 +268,38 @@ export interface HostingAccount {
   created_at?: string;
   updated_at?: string;
 }
+
+// --- Onboarding Request Types ---
+
+export interface OnboardingRequest {
+  id: string;
+  request_number: string;
+
+  employee_name: string;
+  employee_email: string;
+  employee_phone?: string;
+  department: string;
+  company_name: string;
+  position: string;
+  start_date: string;
+
+  hod_name: string;
+  hod_email: string;
+
+  needs_email: boolean;
+  needs_laptop: boolean;
+  needs_onedrive: boolean;
+
+  onedrive_notes?: string;
+  additional_notes?: string;
+
+  status: 'Pending Approval' | 'Approved' | 'In Progress' | 'Completed' | 'Rejected';
+  approval_token?: string;
+  hod_comments?: string;
+  approved_at?: string;
+  rejected_at?: string;
+  completed_at?: string;
+
+  created_at: string;
+  updated_at?: string;
+}

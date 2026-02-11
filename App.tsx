@@ -9,6 +9,8 @@ import HostingAccounts from './pages/HostingAccounts';
 import KnowledgeBase from './pages/KnowledgeBase';
 import Analytics from './pages/Analytics';
 import SubmitTicket from './pages/SubmitTicket';
+import Onboarding from './pages/Onboarding';
+import ApproveRequest from './pages/ApproveRequest';
 import Layout from './components/Layout';
 import ChatbotWidget from './components/ChatbotWidget';
 import { supabase } from './services/supabaseService';
@@ -18,8 +20,10 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isDark, setIsDark] = useState(false);
 
-  // Check if we're on the public /submit route
+  // Check if we're on public routes
   const isSubmitPage = window.location.pathname === '/submit';
+  const isOnboardingPage = window.location.pathname === '/onboarding';
+  const isApprovePage = window.location.pathname.startsWith('/approve/');
 
   useEffect(() => {
     // Check Supabase session
@@ -75,9 +79,18 @@ const App: React.FC = () => {
     setIsAuthenticated(false);
   };
 
-  // Public submit page - no login required
+  // Public pages - no login required
   if (isSubmitPage) {
     return <SubmitTicket />;
+  }
+
+  if (isOnboardingPage) {
+    return <Onboarding />;
+  }
+
+  if (isApprovePage) {
+    const token = window.location.pathname.split('/approve/')[1];
+    return <ApproveRequest token={token} />;
   }
 
   if (!isAuthenticated) {
