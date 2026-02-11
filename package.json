@@ -1,20 +1,29 @@
 {
-    "name": "cpanel-proxy-server",
-    "version": "1.0.0",
-    "description": "Local proxy server for cPanel API to bypass CORS restrictions",
-    "main": "cpanel-proxy-server.js",
+    "name": "it-support-dashboard",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
     "scripts": {
-        "start": "node cpanel-proxy-server.js",
-        "dev": "nodemon cpanel-proxy-server.js"
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
     },
     "dependencies": {
-        "cors": "^2.8.5",
-        "dotenv": "^16.3.1",
-        "express": "^4.18.2",
+        "@supabase/supabase-js": "^2.90.1",
+        "cors": "^2.8.6",
+        "dotenv": "^17.2.4",
+        "express": "^5.2.1",
+        "lucide-react": "^0.562.0",
         "node-fetch": "^2.7.0",
-        "nodemailer": "^6.9.7"
+        "nodemailer": "^8.0.1",
+        "react": "^19.2.3",
+        "react-dom": "^19.2.3",
+        "recharts": "^3.6.0"
     },
     "devDependencies": {
-        "nodemon": "^3.0.1"
+        "@types/node": "^22.14.0",
+        "@vitejs/plugin-react": "^5.0.0",
+        "typescript": "~5.8.2",
+        "vite": "^6.2.0"
     }
 }
