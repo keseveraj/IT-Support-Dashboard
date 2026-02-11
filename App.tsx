@@ -11,6 +11,7 @@ import Analytics from './pages/Analytics';
 import SubmitTicket from './pages/SubmitTicket';
 import Onboarding from './pages/Onboarding';
 import ApproveRequest from './pages/ApproveRequest';
+import OnboardingAdmin from './pages/OnboardingAdmin';
 import Layout from './components/Layout';
 import ChatbotWidget from './components/ChatbotWidget';
 import { supabase } from './services/supabaseService';
@@ -106,7 +107,7 @@ const App: React.FC = () => {
       case 'domains': return <Domains />;
       case 'hosting-accounts': return <HostingAccounts />;
       case 'knowledge-base': return <KnowledgeBase />;
-      case 'knowledge-base': return <KnowledgeBase />;
+      case 'onboarding': return <OnboardingAdmin />;
       default: return <Analytics />;
     }
   };
