@@ -53,6 +53,12 @@ const ApproveRequest: React.FC<ApproveRequestProps> = ({ token }) => {
             return;
         }
 
+        // Validate OneDrive notes if OneDrive is required and approving
+        if (selectedAction === 'approve' && request.needs_onedrive && !oneDriveNotes.trim()) {
+            setError('Please provide OneDrive setup instructions');
+            return;
+        }
+
         setSubmitting(true);
         setError(null);
 
@@ -237,13 +243,17 @@ const ApproveRequest: React.FC<ApproveRequestProps> = ({ token }) => {
                         {request.needs_onedrive && (
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    OneDrive Setup Instructions (Optional)
+                                    OneDrive Setup Instructions *
                                 </label>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                    Please specify: Share with existing account or create new account?
+                                </p>
                                 <textarea
                                     value={oneDriveNotes}
                                     onChange={(e) => setOneDriveNotes(e.target.value)}
                                     rows={3}
-                                    placeholder="e.g., Share with existing account or create new account..."
+                                    required
+                                    placeholder="e.g., Share with existing account john@company.com OR Create new account"
                                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white resize-none"
                                 />
                             </div>

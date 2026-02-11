@@ -205,8 +205,22 @@ const Onboarding: React.FC = () => {
                                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
                                 >
                                     <option value="">Select Company</option>
-                                    <option value="Graduan Bersatu">Graduan Bersatu</option>
-                                    <option value="Graduan Ventures">Graduan Ventures</option>
+                                    <option value="Graduan Bersatu Padat Sdn. Bhd.">Graduan Bersatu Padat Sdn. Bhd.</option>
+                                    <option value="Greenfield Facility Management Sdn.Bhd.">Greenfield Facility Management Sdn.Bhd.</option>
+                                    <option value="Bright Pest Service (M) Sdn Bhd">Bright Pest Service (M) Sdn Bhd</option>
+                                    <option value="Revon Malaya">Revon Malaya</option>
+                                    <option value="Apollo Logistic Sdn Bhd">Apollo Logistic Sdn Bhd</option>
+                                    <option value="Max Health Pharma Sdn Bhd">Max Health Pharma Sdn Bhd</option>
+                                    <option value="Bright Environment Sdn. Bhd.">Bright Environment Sdn. Bhd.</option>
+                                    <option value="Cool Man Acond Service Sdn Bhd">Cool Man Acond Service Sdn Bhd</option>
+                                    <option value="Bright Cleaning Service - Enterprise">Bright Cleaning Service - Enterprise</option>
+                                    <option value="G Cleaning Services - Enterprise">G Cleaning Services - Enterprise</option>
+                                    <option value="Kaw Kaw Kopitiam">Kaw Kaw Kopitiam</option>
+                                    <option value="Telur Maju Setia">Telur Maju Setia</option>
+                                    <option value="SBX Workshop">SBX Workshop</option>
+                                    <option value="Pentalead Sdn. Bhd.">Pentalead Sdn. Bhd.</option>
+                                    <option value="Lava's Holiday Sdn Bhd">Lava's Holiday Sdn Bhd</option>
+                                    <option value="Healix Healthcare Sdn Bhd">Healix Healthcare Sdn Bhd</option>
                                     <option value="Others">Others</option>
                                 </select>
                             </div>
