@@ -40,7 +40,7 @@ app.post('/send-email', async (req, res) => {
             });
         }
 
-        const transporter = nodemailer.createTransporter(smtpConfig);
+        const transporter = nodemailer.createTransport(smtpConfig);
 
         let mailOptions = {};
 
