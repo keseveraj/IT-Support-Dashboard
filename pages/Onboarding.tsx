@@ -147,14 +147,14 @@ const Onboarding: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Email Address *
+                                    Personal Email (for contact)
                                 </label>
                                 <input
                                     type="email"
                                     name="employee_email"
                                     value={formData.employee_email}
                                     onChange={handleChange}
-                                    required
+                                    placeholder="personal@gmail.com"
                                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
                                 />
                             </div>
