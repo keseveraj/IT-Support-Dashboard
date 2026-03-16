@@ -142,7 +142,7 @@ const Onboarding: React.FC = () => {
                                     value={formData.employee_name}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 />
                             </div>
                             <div>
@@ -155,7 +155,7 @@ const Onboarding: React.FC = () => {
                                     value={formData.employee_email}
                                     onChange={handleChange}
                                     placeholder="personal@gmail.com"
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 />
                             </div>
                             <div>
@@ -167,7 +167,7 @@ const Onboarding: React.FC = () => {
                                     name="employee_phone"
                                     value={formData.employee_phone}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 />
                             </div>
                             <div>
@@ -180,7 +180,7 @@ const Onboarding: React.FC = () => {
                                     value={formData.position}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 />
                             </div>
                         </div>
@@ -202,7 +202,7 @@ const Onboarding: React.FC = () => {
                                     value={formData.company_name}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 >
                                     <option value="">Select Company</option>
                                     <option value="Graduan Bersatu Padat Sdn. Bhd.">Graduan Bersatu Padat Sdn. Bhd.</option>
@@ -233,7 +233,7 @@ const Onboarding: React.FC = () => {
                                     value={formData.department}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 >
                                     <option value="">Select Department</option>
                                     <option value="IT">IT</option>
@@ -256,7 +256,7 @@ const Onboarding: React.FC = () => {
                                     value={formData.start_date}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 />
                             </div>
                         </div>
@@ -279,7 +279,7 @@ const Onboarding: React.FC = () => {
                                     value={formData.hod_name}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 />
                             </div>
                             <div>
@@ -292,7 +292,7 @@ const Onboarding: React.FC = () => {
                                     value={formData.hod_email}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                 />
                             </div>
                         </div>
@@ -357,7 +357,7 @@ const Onboarding: React.FC = () => {
                             onChange={handleChange}
                             rows={4}
                             placeholder="Any special requirements or additional information..."
-                            className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-900 dark:text-white resize-none"
+                            className="w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white shadow-sm resize-none"
                         />
                     </div>
 

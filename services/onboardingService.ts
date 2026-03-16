@@ -179,9 +179,17 @@ export async function sendOnboardingEmail(
     request: OnboardingRequest
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const appUrl = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
+        const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+        
+        // Skip confirmation email if no employee email provided
+        if (type === 'confirmation' && !request.employee_email) {
+            return { success: true };
+        }
 
-        const response = await fetch('http://localhost:3001/send-email', {
+        // Use proxy URL - defaults to localhost:3001 for local dev
+        const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
+
+        const response = await fetch(`${proxyUrl}/send-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -198,3 +206,4 @@ export async function sendOnboardingEmail(
         return { success: false, error: error.message };
     }
 }
+
