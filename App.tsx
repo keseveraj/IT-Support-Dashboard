@@ -20,7 +20,10 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('it_dashboard_auth') === 'true';
   });
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState<string>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('page') || 'dashboard';
+  });
   const [isDark, setIsDark] = useState<boolean>(() => {
     return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });

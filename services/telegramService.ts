@@ -57,7 +57,7 @@ export async function sendTelegramTicketNotification(ticket: TicketNotificationD
 
         lines.push(
             ``,
-            `👉 <a href="${appUrl}/"><b>Click Here to Open Dashboard & View Ticket</b></a>`
+            `👉 <a href="${appUrl}/?page=tickets"><b>Click Here to View Ticket in Dashboard</b></a>`
         );
 
         const messageText = lines.filter(Boolean).join('\n');
