@@ -1,5 +1,24 @@
-import { supabase } from './supabaseService';
+import { supabase, createTicket } from './supabaseService';
 import { OnboardingRequest } from '../types';
+
+const LOCAL_ONBOARDING_KEY = 'it_support_onboarding_requests';
+
+const getStoredOnboarding = (): OnboardingRequest[] => {
+    try {
+        const raw = localStorage.getItem(LOCAL_ONBOARDING_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+};
+
+const saveStoredOnboarding = (requests: OnboardingRequest[]) => {
+    try {
+        localStorage.setItem(LOCAL_ONBOARDING_KEY, JSON.stringify(requests));
+    } catch (e) {
+        console.error('Failed to save onboarding requests to localStorage:', e);
+    }
+};
 
 // Generate unique request number
 function generateRequestNumber(): string {
@@ -17,32 +36,68 @@ function generateApprovalToken(): string {
 // Create new onboarding request
 export async function createOnboardingRequest(data: Partial<OnboardingRequest>): Promise<{ success: boolean; request?: OnboardingRequest; error?: string }> {
     try {
-        if (!supabase) {
-            return { success: false, error: 'Supabase not configured' };
-        }
-
         const requestNumber = generateRequestNumber();
         const approvalToken = generateApprovalToken();
+        const now = new Date().toISOString();
 
-        const requestData = {
+        const requestData: OnboardingRequest = {
+            id: `onb-${Date.now()}`,
             ...data,
             request_number: requestNumber,
             approval_token: approvalToken,
             status: 'Pending Approval',
-        };
+            created_at: now,
+        } as OnboardingRequest;
 
-        const { data: request, error } = await supabase
-            .from('onboarding_requests')
-            .insert([requestData])
-            .select()
-            .single();
+        // 1. Save to local storage
+        const currentList = getStoredOnboarding();
+        saveStoredOnboarding([requestData, ...currentList]);
 
-        if (error) {
-            console.error('Error creating onboarding request:', error);
-            return { success: false, error: error.message };
+        // 2. Also create a corresponding IT ticket in the tickets list so it's tracked as a task!
+        const requirementsList = [
+            data.needs_email ? 'Company Email' : null,
+            data.needs_laptop ? 'Laptop/PC Setup' : null,
+            data.needs_onedrive ? 'OneDrive Account' : null,
+        ].filter(Boolean).join(', ');
+
+        const ticketDescription = [
+            `New Employee Onboarding: ${data.employee_name || 'New Staff'} (${data.position || 'Staff'})`,
+            `Start Date: ${data.start_date || 'TBD'}`,
+            `Requirements: ${requirementsList || 'Standard Setup'}`,
+            `HOD: ${data.hod_name || 'N/A'} (${data.hod_email || 'N/A'})`,
+            data.additional_notes ? `Notes: ${data.additional_notes}` : '',
+            `Request #: ${requestNumber}`
+        ].filter(Boolean).join(' | ');
+
+        await createTicket({
+            user_name: data.employee_name || 'New Staff',
+            user_email: data.employee_email || data.hod_email || 'it.support@graduanbersatu.com.my',
+            company_name: data.company_name,
+            department: data.department,
+            computer_name: data.position,
+            issue_type: 'Access',
+            priority: 'High',
+            description: ticketDescription,
+        });
+
+        // 3. Sync to Supabase if connected
+        if (supabase) {
+            try {
+                const { data: dbRequest, error } = await supabase
+                    .from('onboarding_requests')
+                    .insert([requestData])
+                    .select()
+                    .single();
+
+                if (!error && dbRequest) {
+                    return { success: true, request: dbRequest };
+                }
+            } catch (e) {
+                console.warn('Supabase insert failed, onboarding saved locally:', e);
+            }
         }
 
-        return { success: true, request };
+        return { success: true, request: requestData };
     } catch (error: any) {
         console.error('Error in createOnboardingRequest:', error);
         return { success: false, error: error.message };
@@ -51,30 +106,34 @@ export async function createOnboardingRequest(data: Partial<OnboardingRequest>):
 
 // Get all onboarding requests (admin view)
 export async function getOnboardingRequests(statusFilter?: string): Promise<OnboardingRequest[]> {
-    try {
-        if (!supabase) return [];
+    const localRequests = getStoredOnboarding();
 
-        let query = supabase
-            .from('onboarding_requests')
-            .select('*')
-            .order('created_at', { ascending: false });
+    if (supabase) {
+        try {
+            let query = supabase
+                .from('onboarding_requests')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        if (statusFilter && statusFilter !== 'All') {
-            query = query.eq('status', statusFilter);
+            if (statusFilter && statusFilter !== 'All') {
+                query = query.eq('status', statusFilter);
+            }
+
+            const { data, error } = await query;
+            if (!error && data && data.length > 0) {
+                const remoteIds = new Set(data.map(d => d.id || d.request_number));
+                const uniqueLocals = localRequests.filter(lr => !remoteIds.has(lr.id) && !remoteIds.has(lr.request_number));
+                return [...uniqueLocals, ...data];
+            }
+        } catch (e) {
+            console.warn('Supabase fetch onboarding requests failed, using local:', e);
         }
-
-        const { data, error } = await query;
-
-        if (error) {
-            console.error('Error fetching onboarding requests:', error);
-            return [];
-        }
-
-        return data || [];
-    } catch (error) {
-        console.error('Error in getOnboardingRequests:', error);
-        return [];
     }
+
+    if (statusFilter && statusFilter !== 'All') {
+        return localRequests.filter(r => r.status === statusFilter);
+    }
+    return localRequests;
 }
 
 // Get request by approval token (for HOD approval page)
