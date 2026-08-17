@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Download, X, Calendar, Columns } from 'lucide-react';
+import { Download, X, Calendar, Columns, Save, RotateCcw } from 'lucide-react';
 import { Ticket } from '../types';
+
+const STORAGE_KEY = 'csv_export_default_columns';
 
 interface ExportCSVModalProps {
     tickets: Ticket[];
@@ -27,9 +29,14 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
     const [exportFrom, setExportFrom] = useState('');
     const [exportTo, setExportTo] = useState('');
     const [selectedMonth, setSelectedMonth] = useState('');
-    const [selectedColumns, setSelectedColumns] = useState<Record<string, boolean>>(
-        Object.fromEntries(COLUMN_OPTIONS.map(col => [col.key, col.default]))
-    );
+    const [selectedColumns, setSelectedColumns] = useState<Record<string, boolean>>(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) return JSON.parse(saved);
+        } catch {}
+        return Object.fromEntries(COLUMN_OPTIONS.map(col => [col.key, col.default]));
+    });
+    const [savedMessage, setSavedMessage] = useState(false);
 
     // Generate month options for the last 12 months
     const getMonthOptions = () => {
@@ -68,6 +75,18 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
 
     const deselectAllColumns = () => {
         setSelectedColumns(Object.fromEntries(COLUMN_OPTIONS.map(col => [col.key, false])));
+    };
+
+    const saveAsDefault = () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedColumns));
+        setSavedMessage(true);
+        setTimeout(() => setSavedMessage(false), 2000);
+    };
+
+    const resetDefaults = () => {
+        const defaults = Object.fromEntries(COLUMN_OPTIONS.map(col => [col.key, col.default]));
+        setSelectedColumns(defaults);
+        localStorage.removeItem(STORAGE_KEY);
     };
 
     const getSelectedColumnCount = () => Object.values(selectedColumns).filter(Boolean).length;
@@ -226,7 +245,7 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
                                     {getSelectedColumnCount()} selected
                                 </span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
                                 <button
                                     onClick={selectAllColumns}
                                     className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
@@ -268,6 +287,29 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
                                     </span>
                                 </label>
                             ))}
+                        </div>
+
+                        {/* Save / Reset defaults */}
+                        <div className="flex items-center gap-2 mt-3">
+                            <button
+                                onClick={saveAsDefault}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+                            >
+                                <Save size={14} />
+                                Save as Default
+                            </button>
+                            <button
+                                onClick={resetDefaults}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                <RotateCcw size={14} />
+                                Reset
+                            </button>
+                            {savedMessage && (
+                                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
+                                    ✓ Defaults saved!
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
