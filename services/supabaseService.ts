@@ -15,31 +15,6 @@ export const supabase = (SUPABASE_URL && SUPABASE_KEY)
   ? createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
-// Mock Data Generators for Demo Purpose
-const generateMockTickets = (): Ticket[] => {
-  return Array.from({ length: 25 }).map((_, i) => ({
-    id: `t-${i}`,
-    ticket_number: `INC-${1000 + i}`,
-    user_name: i % 2 === 0 ? 'Alice Johnson' : 'Bob Smith',
-    user_email: i % 2 === 0 ? 'alice@company.com' : 'bob@company.com',
-    department: ['HR', 'Finance', 'Engineering', 'Sales'][i % 4],
-    computer_name: `PC-${['HR', 'FIN', 'ENG', 'SAL'][i % 4]}-0${i}`,
-    issue_type: ['Network', 'Software', 'Printer', 'Access'][i % 4] as any,
-    priority: ['Urgent', 'High', 'Normal', 'Low'][i % 4] as any,
-    status: ['New', 'In Progress', 'Resolved', 'Closed'][i % 4] as any,
-    description: 'User is reporting slow system performance and inability to access shared drive.',
-    created_at: new Date(Date.now() - Math.random() * 86400000 * 3).toISOString(), // Random time last 3 days
-    remote_tool: 'TeamViewer',
-    remote_id: `${Math.floor(Math.random() * 900000000) + 100000000}`,
-    remote_password: `${Math.random().toString(36).substring(2, 8)}`,
-    comments: [
-      { id: 'c1', author: 'System', text: 'Ticket created', timestamp: new Date().toISOString() }
-    ]
-  }));
-};
-
-const MOCK_TICKETS = generateMockTickets();
-
 const MOCK_SOLUTIONS: Solution[] = [
   {
     id: 's1',
@@ -97,14 +72,7 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
     }
   }
 
-  // If local tickets exist, return them
-  if (localTickets.length > 0) {
-    return localTickets;
-  }
-
-  // Initial mock data fallback if completely empty
-  await new Promise(r => setTimeout(r, 400));
-  return MOCK_TICKETS;
+  return localTickets;
 };
 
 export const fetchSolutions = async (): Promise<Solution[]> => {
@@ -124,10 +92,6 @@ export const updateTicketStatus = async (id: string, status: string): Promise<vo
   const locals = getStoredTickets();
   const updatedLocals = locals.map(t => t.id === id || t.ticket_number === id ? { ...t, status: status as any } : t);
   saveStoredTickets(updatedLocals);
-
-  // Update mock in memory
-  const mockItem = MOCK_TICKETS.find(t => t.id === id || t.ticket_number === id);
-  if (mockItem) mockItem.status = status as any;
 
   // Update remote Supabase if available
   if (supabase) {
@@ -185,10 +149,7 @@ export const createTicket = async (ticketData: CreateTicketData): Promise<{ succ
   const existing = getStoredTickets();
   saveStoredTickets([newTicket, ...existing]);
 
-  // 2. Also prepend to in-memory MOCK_TICKETS so it appears everywhere immediately
-  MOCK_TICKETS.unshift(newTicket);
-
-  // 3. Try to sync to Supabase if connected
+  // 2. Try to sync to Supabase if connected
   if (supabase) {
     try {
       await supabase
