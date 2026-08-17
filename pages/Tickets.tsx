@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, AlertCircle, Clock, CheckCircle, XCircle, Eye, Download } from 'lucide-react';
+import { Search, Filter, Plus, AlertCircle, Clock, CheckCircle, XCircle, Eye, Download, Share2, ExternalLink, Copy, Check } from 'lucide-react';
 import { Ticket } from '../types';
 import { fetchTickets, updateTicketStatus } from '../services/supabaseService';
 import TicketModal from '../components/TicketModal';
@@ -17,6 +17,15 @@ const Tickets: React.FC = () => {
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [showExportModal, setShowExportModal] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
+
+    const handleCopySubmitLink = () => {
+        const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+        const submitUrl = `${appUrl}/submit`;
+        navigator.clipboard.writeText(submitUrl);
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2500);
+    };
 
     useEffect(() => {
         loadTickets();
@@ -109,20 +118,49 @@ const Tickets: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Support Tickets</h1>
                     <p className="text-gray-500 dark:text-gray-400">Manage and track all support requests</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                    {/* Copy Public Link Button */}
+                    <button
+                        onClick={handleCopySubmitLink}
+                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all border shadow-sm ${
+                            copiedLink
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700'
+                                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                        title="Copy public ticket submission link to share with staff"
+                    >
+                        {copiedLink ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
+                        <span>{copiedLink ? 'Link Copied!' : 'Copy Form Link'}</span>
+                    </button>
+
+                    {/* Open Public Form in new tab */}
+                    <a
+                        href="/submit"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                        title="Open Public Ticket Submission Form in new tab"
+                    >
+                        <ExternalLink size={16} />
+                        <span>Public Form</span>
+                    </a>
+
+                    {/* Export Report Modal */}
                     <button
                         onClick={() => setShowExportModal(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
                     >
-                        <Download size={18} />
-                        Export Report
+                        <Download size={16} />
+                        <span>Export Report</span>
                     </button>
+
+                    {/* Admin Log Task / Ticket Modal */}
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
                     >
                         <Plus size={18} />
-                        Log Task / Ticket
+                        <span>Log Task / Ticket</span>
                     </button>
                 </div>
             </div>
