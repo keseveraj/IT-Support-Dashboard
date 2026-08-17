@@ -1,9 +1,9 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
-// Vercel Serverless Function: /api/send-email
-module.exports = async (req, res) => {
+// Vercel Serverless Function: /api/send-email (ESM)
+export default async function handler(req, res) {
     // Enable CORS
-    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader(
@@ -12,8 +12,7 @@ module.exports = async (req, res) => {
     );
 
     if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+        return res.status(200).end();
     }
 
     if (req.method !== 'POST') {
@@ -21,7 +20,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { type, request, appUrl } = req.body;
+        const { type, request, appUrl } = req.body || {};
 
         if (!type || !request) {
             return res.status(400).json({ success: false, error: 'Missing required parameters' });
@@ -42,7 +41,7 @@ module.exports = async (req, res) => {
             },
         });
 
-        const baseUrl = appUrl || process.env.VITE_APP_URL || 'https://it-support-dashboard-chi.vercel.app';
+        const baseUrl = appUrl || process.env.VITE_APP_URL || 'https://it-support-dashboard.vercel.app';
         let mailOptions = {};
 
         if (type === 'hod_approval') {
@@ -53,7 +52,7 @@ module.exports = async (req, res) => {
                 to: request.hod_email,
                 subject: `Onboarding Request Approval Required - ${request.employee_name}`,
                 html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; rounded: 8px;">
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
                         <h2 style="color: #10b981; margin-top: 0;">New Employee Onboarding Request</h2>
                         <p>Dear ${request.hod_name},</p>
                         <p>A new employee onboarding request requires your review and approval:</p>
@@ -144,4 +143,4 @@ module.exports = async (req, res) => {
         console.error('Error sending email:', error);
         return res.status(500).json({ success: false, error: error.message });
     }
-};
+}
