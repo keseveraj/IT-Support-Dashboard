@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getRequestByToken, approveOrRejectRequest, sendOnboardingEmail } from '../services/onboardingService';
+import { sendTelegramApprovalNotification } from '../services/telegramService';
 import { OnboardingRequest } from '../types';
 import { CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
 
@@ -75,7 +76,7 @@ const ApproveRequest: React.FC<ApproveRequestProps> = ({ token }) => {
             return;
         }
 
-        // Send notification to IT if approved
+        // Send email notification to IT if approved
         if (selectedAction === 'approve') {
             const updatedRequest = {
                 ...request,
@@ -83,8 +84,25 @@ const ApproveRequest: React.FC<ApproveRequestProps> = ({ token }) => {
                 hod_comments: hodComments,
                 onedrive_notes: oneDriveNotes,
             };
-            await sendOnboardingEmail('it_notification', updatedRequest);
+            sendOnboardingEmail('it_notification', updatedRequest).catch(console.error);
         }
+
+        // Send instant Telegram notification to Raj for both Approve and Reject
+        sendTelegramApprovalNotification({
+            action: selectedAction,
+            request_number: request.request_number,
+            employee_name: request.employee_name,
+            position: request.position,
+            department: request.department,
+            company_name: request.company_name,
+            start_date: request.start_date,
+            hod_name: request.hod_name,
+            hod_comments: hodComments,
+            onedrive_notes: selectedAction === 'approve' ? oneDriveNotes : undefined,
+            needs_email: request.needs_email,
+            needs_laptop: request.needs_laptop,
+            needs_onedrive: request.needs_onedrive,
+        }).catch(console.error);
 
         setAction(selectedAction);
         setCompleted(true);
