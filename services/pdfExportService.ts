@@ -26,50 +26,7 @@ function formatDateDDMMMYY(dateString?: string): string {
     }
 }
 
-// Draw Raj's signature using precise vector curves matching the provided image
-function drawRajSignature(doc: jsPDF, startX: number, startY: number) {
-    doc.saveGraphicsState();
-    doc.setDrawColor(20, 45, 95); // Deep blue ink
-    doc.setLineWidth(0.7);
 
-    // Initial vertical loop stroke (the "R" stem and loop)
-    doc.lines(
-        [
-            [2, -14],  // up
-            [6, 3],    // right curve
-            [-2, 6],   // down
-            [-8, 6],   // cross
-            [12, 1],   // horizontal line
-            [4, -9],   // loop top
-            [6, 9],    // down slope
-            [8, -2],   // flourish
-        ],
-        startX + 3,
-        startY + 15,
-        [1, 1],
-        'S',
-        false
-    );
-
-    // Characteristic cursive loop and flourish
-    doc.setLineWidth(0.6);
-    doc.lines(
-        [
-            [-4, -10],
-            [8, -6],
-            [12, 8],
-            [10, -4],
-            [8, 2],
-        ],
-        startX + 5,
-        startY + 12,
-        [1, 1],
-        'S',
-        false
-    );
-
-    doc.restoreGraphicsState();
-}
 
 export function exportTicketsToPDF(tickets: Ticket[], options: PDFExportOptions = {}) {
     const {
@@ -174,30 +131,13 @@ export function exportTicketsToPDF(tickets: Ticket[], options: PDFExportOptions 
         const pageText = `Page ${i} of ${totalPages}`;
         doc.text(pageText, pageWidth - margin - doc.getTextWidth(pageText), 12);
 
-        // Render Prepared By on each page or the bottom of the page as in reference
-        const sigY = pageHeight - 34;
+        // Render Prepared By on each page at the bottom
+        const sigY = pageHeight - 20;
 
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor(40, 40, 40);
-        doc.text('Prepared by:', margin, sigY);
-
-        // Signature vector
-        drawRajSignature(doc, margin, sigY + 2);
-
-        // Dotted line
-        doc.setLineWidth(0.3);
-        doc.setDrawColor(120, 120, 120);
-        doc.setLineDashPattern([0.8, 0.8], 0);
-        doc.line(margin, sigY + 22, margin + 32, sigY + 22);
-        doc.setLineDashPattern([], 0); // reset
-
-        // Name
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.5);
-        doc.setTextColor(20, 20, 20);
-        const nameWidth = doc.getTextWidth(preparedBy);
-        doc.text(preparedBy, margin + (32 - nameWidth) / 2, sigY + 26);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Prepared by : ${preparedBy}`, margin, sigY);
     }
 
     // Generate filename
