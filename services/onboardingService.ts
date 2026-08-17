@@ -1,4 +1,5 @@
 import { supabase, createTicket } from './supabaseService';
+import { sendTelegramTicketNotification } from './telegramService';
 import { OnboardingRequest } from '../types';
 
 const LOCAL_ONBOARDING_KEY = 'it_support_onboarding_requests';
@@ -79,6 +80,19 @@ export async function createOnboardingRequest(data: Partial<OnboardingRequest>):
             priority: 'High',
             description: ticketDescription,
         });
+
+        // Send Telegram alert for new onboarding
+        sendTelegramTicketNotification({
+            ticket_number: requestNumber,
+            user_name: `${data.employee_name} (New Staff)`,
+            user_email: data.employee_email,
+            company_name: data.company_name,
+            department: data.department,
+            computer_name: data.position,
+            issue_type: 'Staff Onboarding',
+            priority: 'High',
+            description: `Onboarding request for ${data.employee_name} (${data.position}). HOD: ${data.hod_name} (${data.hod_email}). Requires: ${requirementsList || 'Standard Setup'}.`,
+        }).catch(console.warn);
 
         // 3. Sync to Supabase if connected
         if (supabase) {
