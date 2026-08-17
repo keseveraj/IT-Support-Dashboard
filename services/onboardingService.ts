@@ -262,23 +262,39 @@ export async function sendOnboardingEmail(
             return { success: true };
         }
 
-        // Use proxy URL - defaults to localhost:3001 for local dev
-        const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
+        // Determine email endpoint:
+        // On Vercel / production, use same-origin serverless endpoint /api/send-email
+        // On localhost, try localhost:3001 first or /api/send-email
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const endpoints = isLocalhost
+            ? ['http://localhost:3001/send-email', '/api/send-email']
+            : ['/api/send-email', 'http://localhost:3001/send-email'];
 
-        const response = await fetch(`${proxyUrl}/send-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                type,
-                request,
-                appUrl,
-            }),
-        });
+        let lastError = '';
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type,
+                        request,
+                        appUrl,
+                    }),
+                });
 
-        const result = await response.json();
-        return result;
+                if (response.ok) {
+                    const result = await response.json();
+                    return result;
+                }
+            } catch (err: any) {
+                lastError = err.message;
+            }
+        }
+
+        return { success: false, error: lastError || 'Email endpoint unreachable' };
     } catch (error: any) {
-        console.error('Error sending email:', error);
+        console.warn('Error in sendOnboardingEmail:', error);
         return { success: false, error: error.message };
     }
 }

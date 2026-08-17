@@ -64,14 +64,14 @@ const Onboarding: React.FC = () => {
             }
 
             setRequestNumber(result.request.request_number);
-
-            // Send emails
-            await sendOnboardingEmail('hod_approval', result.request);
-            await sendOnboardingEmail('confirmation', result.request);
-
             setSubmitted(true);
+
+            // Send emails in background
+            sendOnboardingEmail('hod_approval', result.request).catch(console.warn);
+            sendOnboardingEmail('confirmation', result.request).catch(console.warn);
         } catch (err: any) {
-            setError(err.message || 'An error occurred');
+            console.error('Onboarding submission error:', err);
+            setError(err.message || 'An error occurred during submission');
         } finally {
             setLoading(false);
         }
