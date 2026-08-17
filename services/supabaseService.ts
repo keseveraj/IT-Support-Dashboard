@@ -61,39 +61,69 @@ const MOCK_SOLUTIONS: Solution[] = [
   }
 ];
 
+const LOCAL_TICKETS_KEY = 'it_support_submitted_tickets';
+
+const getStoredTickets = (): Ticket[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_TICKETS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveStoredTickets = (tickets: Ticket[]) => {
+  try {
+    localStorage.setItem(LOCAL_TICKETS_KEY, JSON.stringify(tickets));
+  } catch (e) {
+    console.error('Failed to save tickets to localStorage:', e);
+  }
+};
+
 export const fetchTickets = async (): Promise<Ticket[]> => {
+  const localTickets = getStoredTickets();
+  
   if (supabase) {
     try {
       const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
-      if (!error && data) return data as Ticket[];
-      console.warn('Supabase fetch failed or empty, falling back to mock data', error);
+      if (!error && data && data.length > 0) {
+        // Merge remote and local (avoiding duplicates by id)
+        const remoteIds = new Set(data.map(d => d.id || d.ticket_number));
+        const uniqueLocals = localTickets.filter(lt => !remoteIds.has(lt.id) && !remoteIds.has(lt.ticket_number));
+        return [...uniqueLocals, ...data] as Ticket[];
+      }
     } catch (e) {
-      console.error('Supabase error:', e);
+      console.warn('Supabase fetch tickets failed, using local tickets:', e);
     }
   }
-  // Simulate delay
-  await new Promise(r => setTimeout(r, 800));
+
+  // If local tickets exist, return them
+  if (localTickets.length > 0) {
+    return localTickets;
+  }
+
+  // Initial mock data fallback if completely empty
+  await new Promise(r => setTimeout(r, 400));
   return MOCK_TICKETS;
 };
 
-export const fetchSolutions = async (): Promise<Solution[]> => {
+export const updateTicketStatus = async (id: string, status: string): Promise<void> => {
+  // Update local storage
+  const locals = getStoredTickets();
+  const updatedLocals = locals.map(t => t.id === id || t.ticket_number === id ? { ...t, status: status as any } : t);
+  saveStoredTickets(updatedLocals);
+
+  // Update mock in memory
+  const mockItem = MOCK_TICKETS.find(t => t.id === id || t.ticket_number === id);
+  if (mockItem) mockItem.status = status as any;
+
+  // Update remote Supabase if available
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('solutions').select('*');
-      if (!error && data) return data as Solution[];
+      await supabase.from('tickets').update({ status }).eq('id', id);
     } catch (e) {
-      console.error('Supabase error:', e);
+      console.warn('Supabase update status failed:', e);
     }
-  }
-  return MOCK_SOLUTIONS;
-};
-
-export const updateTicketStatus = async (id: string, status: string): Promise<void> => {
-  if (supabase) {
-    await supabase.from('tickets').update({ status }).eq('id', id);
-  } else {
-    const t = MOCK_TICKETS.find(t => t.id === id);
-    if (t) t.status = status as any;
   }
 };
 
@@ -103,6 +133,7 @@ interface CreateTicketData {
   user_email: string;
   company_name?: string;
   department?: string;
+  computer_name?: string;
   issue_type: string;
   priority?: string;
   description: string;
@@ -111,16 +142,53 @@ interface CreateTicketData {
 }
 
 export const createTicket = async (ticketData: CreateTicketData): Promise<{ success: boolean; ticketNumber?: string; error?: string }> => {
+  const timestamp = new Date();
+  const dateStr = timestamp.toISOString().slice(0, 10).replace(/-/g, '');
+  const randomSuffix = Math.floor(100 + Math.random() * 900);
+  const ticketNumber = `INC-${dateStr}-${randomSuffix}`;
+  const newId = `t-${Date.now()}`;
+
+  const newTicket: Ticket = {
+    id: newId,
+    ticket_number: ticketNumber,
+    user_name: ticketData.user_name,
+    user_email: ticketData.user_email,
+    company_name: ticketData.company_name || 'Graduan Bersatu',
+    department: ticketData.department || 'General',
+    computer_name: ticketData.computer_name || '',
+    issue_type: ticketData.issue_type as any,
+    priority: (ticketData.priority || 'Normal') as any,
+    status: 'New',
+    description: ticketData.description,
+    created_at: timestamp.toISOString(),
+    remote_tool: 'TeamViewer',
+    remote_id: ticketData.remote_id || undefined,
+    remote_password: ticketData.remote_password || undefined,
+    comments: [
+      { id: `c-${Date.now()}`, author: 'System', text: 'Ticket created via web form', timestamp: timestamp.toISOString() }
+    ]
+  };
+
+  // 1. Always save to local storage immediately
+  const existing = getStoredTickets();
+  saveStoredTickets([newTicket, ...existing]);
+
+  // 2. Also prepend to in-memory MOCK_TICKETS so it appears everywhere immediately
+  MOCK_TICKETS.unshift(newTicket);
+
+  // 3. Try to sync to Supabase if connected
   if (supabase) {
     try {
-      const { data, error } = await supabase
+      await supabase
         .from('tickets')
         .insert({
+          ticket_number: ticketNumber,
           user_name: ticketData.user_name,
           user_email: ticketData.user_email,
-          email: ticketData.user_email, // Also set email field for compatibility
+          email: ticketData.user_email,
           company_name: ticketData.company_name || null,
           department: ticketData.department || null,
+          computer_name: ticketData.computer_name || null,
           issue_type: ticketData.issue_type,
           priority: ticketData.priority || 'Normal',
           status: 'New',
@@ -128,31 +196,14 @@ export const createTicket = async (ticketData: CreateTicketData): Promise<{ succ
           remote_id: ticketData.remote_id || null,
           remote_password: ticketData.remote_password || null,
           remote_tool: 'TeamViewer',
-          comments: JSON.stringify([{ id: 'c1', author: 'System', text: 'Ticket created via web form', timestamp: new Date().toISOString() }])
-        })
-        .select('id')
-        .single();
-
-      if (error) {
-        console.error('Failed to create ticket:', error);
-        return { success: false, error: error.message };
-      }
-
-      const ticketNumber = `INC-${data.id}`;
-
-      // Update ticket_number field
-      await supabase.from('tickets').update({ ticket_number: ticketNumber }).eq('id', data.id);
-
-      return { success: true, ticketNumber };
+          comments: JSON.stringify(newTicket.comments)
+        });
     } catch (e) {
-      console.error('Supabase error:', e);
-      return { success: false, error: 'Failed to submit ticket' };
+      console.warn('Supabase remote insert failed, ticket saved locally:', e);
     }
   }
 
-  // Mock fallback
-  const mockId = Math.floor(Math.random() * 10000);
-  return { success: true, ticketNumber: `INC-${mockId}` };
+  return { success: true, ticketNumber };
 };
 
 // Create a new solution for Knowledge Base
