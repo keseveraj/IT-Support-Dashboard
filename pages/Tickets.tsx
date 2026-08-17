@@ -3,6 +3,7 @@ import { Search, Filter, Plus, AlertCircle, Clock, CheckCircle, XCircle, Eye, Do
 import { Ticket } from '../types';
 import { fetchTickets, updateTicketStatus } from '../services/supabaseService';
 import TicketModal from '../components/TicketModal';
+import ExportCSVModal from '../components/ExportCSVModal';
 
 const Tickets: React.FC = () => {
     const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -13,6 +14,7 @@ const Tickets: React.FC = () => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+    const [showExportModal, setShowExportModal] = useState(false);
 
     useEffect(() => {
         loadTickets();
@@ -95,60 +97,7 @@ const Tickets: React.FC = () => {
         }
     };
 
-    const exportToCSV = () => {
-        // CSV headers
-        const headers = [
-            'Ticket Number',
-            'Date Created',
-            'User Name',
-            'Email',
-            'Company',
-            'Department',
-            'Computer Name',
-            'Issue Type',
-            'Priority',
-            'Status',
-            'Description',
-            'TeamViewer ID',
-            'TeamViewer Password'
-        ];
 
-        // Convert filtered tickets to CSV rows
-        const csvData = filteredTickets.map(ticket => [
-            ticket.ticket_number || '',
-            ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : '',
-            ticket.user_name || '',
-            ticket.user_email || '',
-            ticket.company_name || '',
-            ticket.department || '',
-            ticket.computer_name || '',
-            ticket.issue_type || '',
-            ticket.priority || '',
-            ticket.status || '',
-            ticket.description ? `"${ticket.description.replace(/"/g, '""')}"` : '', // Escape quotes
-            ticket.remote_id || '',
-            ticket.remote_password || ''
-        ]);
-
-        // Combine headers and data
-        const csvContent = [
-            headers.join(','),
-            ...csvData.map(row => row.join(','))
-        ].join('\n');
-
-        // Create blob and download
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-
-        link.setAttribute('href', url);
-        link.setAttribute('download', `tickets_export_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
 
     return (
         <div className="space-y-6">
@@ -160,7 +109,7 @@ const Tickets: React.FC = () => {
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={exportToCSV}
+                        onClick={() => setShowExportModal(true)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                     >
                         <Download size={18} />
@@ -346,6 +295,14 @@ const Tickets: React.FC = () => {
                     ticket={selectedTicket}
                     onClose={() => setSelectedTicket(null)}
                     onUpdateStatus={handleUpdateStatus}
+                />
+            )}
+
+            {/* Export CSV Modal */}
+            {showExportModal && (
+                <ExportCSVModal
+                    tickets={tickets}
+                    onClose={() => setShowExportModal(false)}
                 />
             )}
         </div>
