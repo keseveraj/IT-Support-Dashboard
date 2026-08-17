@@ -107,6 +107,18 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   return MOCK_TICKETS;
 };
 
+export const fetchSolutions = async (): Promise<Solution[]> => {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('solutions').select('*');
+      if (!error && data && data.length > 0) return data as Solution[];
+    } catch (e) {
+      console.warn('Supabase fetch solutions failed:', e);
+    }
+  }
+  return MOCK_SOLUTIONS;
+};
+
 export const updateTicketStatus = async (id: string, status: string): Promise<void> => {
   // Update local storage
   const locals = getStoredTickets();
