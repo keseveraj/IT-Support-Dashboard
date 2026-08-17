@@ -139,20 +139,23 @@ export async function getOnboardingRequests(statusFilter?: string): Promise<Onbo
 // Get request by approval token (for HOD approval page)
 export async function getRequestByToken(token: string): Promise<OnboardingRequest | null> {
     try {
-        if (!supabase) return null;
+        // 1. Check local storage first
+        const localList = getStoredOnboarding();
+        const localMatch = localList.find(r => r.approval_token === token);
+        if (localMatch) return localMatch;
 
-        const { data, error } = await supabase
-            .from('onboarding_requests')
-            .select('*')
-            .eq('approval_token', token)
-            .single();
+        // 2. Check Supabase if connected
+        if (supabase) {
+            const { data, error } = await supabase
+                .from('onboarding_requests')
+                .select('*')
+                .eq('approval_token', token)
+                .single();
 
-        if (error) {
-            console.error('Error fetching request by token:', error);
-            return null;
+            if (!error && data) return data;
         }
 
-        return data;
+        return null;
     } catch (error) {
         console.error('Error in getRequestByToken:', error);
         return null;
@@ -162,22 +165,20 @@ export async function getRequestByToken(token: string): Promise<OnboardingReques
 // Update request status (admin)
 export async function updateRequestStatus(id: string, status: string): Promise<boolean> {
     try {
-        if (!supabase) return false;
+        const localList = getStoredOnboarding();
+        const updatedLocals = localList.map(r => r.id === id || r.request_number === id ? { ...r, status } : r);
+        saveStoredOnboarding(updatedLocals);
 
-        const updateData: any = { status, updated_at: new Date().toISOString() };
+        if (supabase) {
+            const updateData: any = { status, updated_at: new Date().toISOString() };
+            if (status === 'Completed') {
+                updateData.completed_at = new Date().toISOString();
+            }
 
-        if (status === 'Completed') {
-            updateData.completed_at = new Date().toISOString();
-        }
-
-        const { error } = await supabase
-            .from('onboarding_requests')
-            .update(updateData)
-            .eq('id', id);
-
-        if (error) {
-            console.error('Error updating request status:', error);
-            return false;
+            await supabase
+                .from('onboarding_requests')
+                .update(updateData)
+                .eq('id', id);
         }
 
         return true;
@@ -195,34 +196,50 @@ export async function approveOrRejectRequest(
     oneDriveNotes?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        if (!supabase) {
-            return { success: false, error: 'Supabase not configured' };
-        }
+        const now = new Date().toISOString();
+        const status = action === 'approve' ? 'Approved' : 'Rejected';
 
-        const updateData: any = {
-            hod_comments: hodComments,
-            updated_at: new Date().toISOString(),
-        };
+        // 1. Update local storage
+        const localList = getStoredOnboarding();
+        const target = localList.find(r => r.approval_token === token);
 
-        if (action === 'approve') {
-            updateData.status = 'Approved';
-            updateData.approved_at = new Date().toISOString();
-            if (oneDriveNotes) {
-                updateData.onedrive_notes = oneDriveNotes;
+        const updatedLocals = localList.map(r => {
+            if (r.approval_token === token) {
+                return {
+                    ...r,
+                    status,
+                    hod_comments: hodComments,
+                    onedrive_notes: action === 'approve' ? oneDriveNotes : r.onedrive_notes,
+                    approved_at: action === 'approve' ? now : undefined,
+                    rejected_at: action === 'reject' ? now : undefined,
+                    updated_at: now,
+                };
             }
-        } else {
-            updateData.status = 'Rejected';
-            updateData.rejected_at = new Date().toISOString();
-        }
+            return r;
+        });
+        saveStoredOnboarding(updatedLocals);
 
-        const { error } = await supabase
-            .from('onboarding_requests')
-            .update(updateData)
-            .eq('approval_token', token);
+        // 2. Sync to Supabase if connected
+        if (supabase) {
+            const updateData: any = {
+                status,
+                hod_comments: hodComments,
+                updated_at: now,
+            };
 
-        if (error) {
-            console.error('Error approving/rejecting request:', error);
-            return { success: false, error: error.message };
+            if (action === 'approve') {
+                updateData.approved_at = now;
+                if (oneDriveNotes) {
+                    updateData.onedrive_notes = oneDriveNotes;
+                }
+            } else {
+                updateData.rejected_at = now;
+            }
+
+            await supabase
+                .from('onboarding_requests')
+                .update(updateData)
+                .eq('approval_token', token);
         }
 
         return { success: true };
