@@ -17,9 +17,13 @@ import ChatbotWidget from './components/ChatbotWidget';
 import { supabase } from './services/supabaseService';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('it_dashboard_auth') === 'true';
+  });
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
 
   // Check if we're on public routes
   const isSubmitPage = window.location.pathname === '/submit';
@@ -30,9 +34,14 @@ const App: React.FC = () => {
     // Check Supabase session
     const checkSession = async () => {
       if (supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          setIsAuthenticated(true);
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            setIsAuthenticated(true);
+            localStorage.setItem('it_dashboard_auth', 'true');
+          }
+        } catch (e) {
+          console.warn('Session check warning:', e);
         }
       }
     };
@@ -42,40 +51,44 @@ const App: React.FC = () => {
     // Listen for auth state changes
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setIsAuthenticated(!!session);
+        if (session) {
+          setIsAuthenticated(true);
+          localStorage.setItem('it_dashboard_auth', 'true');
+        }
       });
 
       return () => subscription.unsubscribe();
     }
-
-    // Check theme
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, []);
 
-  const toggleTheme = () => {
+  // Sync dark class on mount and state change
+  useEffect(() => {
     if (isDark) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setIsDark(false);
-    } else {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
-      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
+  }, [isDark]);
+
+  const toggleTheme = () => {
+    setIsDark(prev => !prev);
   };
 
   const handleLogin = () => {
     setIsAuthenticated(true);
+    localStorage.setItem('it_dashboard_auth', 'true');
   };
 
   const handleLogout = async () => {
+    localStorage.removeItem('it_dashboard_auth');
     if (supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('Sign out warning:', e);
+      }
     }
     setIsAuthenticated(false);
   };

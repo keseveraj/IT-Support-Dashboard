@@ -1,9 +1,27 @@
-import React, { useState } from 'react';
-import { LifeBuoy, Send, CheckCircle, Monitor } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LifeBuoy, Send, CheckCircle, Monitor, Sun, Moon } from 'lucide-react';
 import { createTicket } from '../services/supabaseService';
 import { sendTelegramTicketNotification } from '../services/telegramService';
 
 const SubmitTicket: React.FC = () => {
+    const [isDark, setIsDark] = useState<boolean>(() => {
+        return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    });
+
+    useEffect(() => {
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [isDark]);
+
+    const toggleTheme = () => {
+        setIsDark(prev => !prev);
+    };
+
     const [formData, setFormData] = useState({
         user_name: '',
         user_email: '',
@@ -86,7 +104,19 @@ const SubmitTicket: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 py-8 px-4">
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-slate-50 to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-8 px-4 transition-colors duration-200">
+            {/* Top Bar with Dark Mode Toggle */}
+            <div className="max-w-2xl mx-auto flex justify-end mb-4">
+                <button
+                    onClick={toggleTheme}
+                    className="p-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all flex items-center gap-2 text-sm font-medium"
+                    title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                    {isDark ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-gray-600" />}
+                    <span>{isDark ? 'Light' : 'Dark'}</span>
+                </button>
+            </div>
+
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-8">

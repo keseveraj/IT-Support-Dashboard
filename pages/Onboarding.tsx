@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createOnboardingRequest, sendOnboardingEmail } from '../services/onboardingService';
-import { UserPlus, Building2, Mail, Phone, Calendar, Briefcase, User, CheckCircle2 } from 'lucide-react';
+import { UserPlus, Building2, Mail, Phone, Calendar, Briefcase, User, CheckCircle2, Sun, Moon } from 'lucide-react';
 
 const Onboarding: React.FC = () => {
+    const [isDark, setIsDark] = useState<boolean>(() => {
+        return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    });
+
+    useEffect(() => {
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [isDark]);
+
+    const toggleTheme = () => {
+        setIsDark(prev => !prev);
+    };
+
     const [formData, setFormData] = useState({
         employee_name: '',
         employee_email: '',
@@ -106,7 +124,19 @@ const Onboarding: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-slate-50 to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-12 px-4 transition-colors duration-200">
+            {/* Top Bar with Dark Mode Toggle */}
+            <div className="max-w-3xl mx-auto flex justify-end mb-4">
+                <button
+                    onClick={toggleTheme}
+                    className="p-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all flex items-center gap-2 text-sm font-medium"
+                    title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                    {isDark ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-gray-600" />}
+                    <span>{isDark ? 'Light' : 'Dark'}</span>
+                </button>
+            </div>
+
             <div className="max-w-3xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-8">
