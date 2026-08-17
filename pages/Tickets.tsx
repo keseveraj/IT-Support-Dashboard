@@ -4,6 +4,7 @@ import { Ticket } from '../types';
 import { fetchTickets, updateTicketStatus } from '../services/supabaseService';
 import TicketModal from '../components/TicketModal';
 import ExportCSVModal from '../components/ExportCSVModal';
+import AddTicketModal from '../components/AddTicketModal';
 
 const Tickets: React.FC = () => {
     const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -15,6 +16,7 @@ const Tickets: React.FC = () => {
     const [endDate, setEndDate] = useState<string>('');
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [showExportModal, setShowExportModal] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
 
     useEffect(() => {
         loadTickets();
@@ -115,14 +117,13 @@ const Tickets: React.FC = () => {
                         <Download size={18} />
                         Export Report
                     </button>
-                    <a
-                        href="/submit"
-                        target="_blank"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
                     >
                         <Plus size={18} />
-                        New Ticket
-                    </a>
+                        Log Task / Ticket
+                    </button>
                 </div>
             </div>
 
@@ -303,6 +304,14 @@ const Tickets: React.FC = () => {
                 <ExportCSVModal
                     tickets={tickets}
                     onClose={() => setShowExportModal(false)}
+                />
+            )}
+
+            {/* Quick Log Task / Ticket Modal */}
+            {showAddModal && (
+                <AddTicketModal
+                    onClose={() => setShowAddModal(false)}
+                    onTicketCreated={() => loadTickets()}
                 />
             )}
         </div>
