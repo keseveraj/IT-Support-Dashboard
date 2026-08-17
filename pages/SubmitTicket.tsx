@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LifeBuoy, Send, CheckCircle, Monitor } from 'lucide-react';
 import { createTicket } from '../services/supabaseService';
+import { sendTelegramTicketNotification } from '../services/telegramService';
 
 const SubmitTicket: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -45,8 +46,15 @@ const SubmitTicket: React.FC = () => {
         const result = await createTicket(submissionData);
 
         if (result.success) {
-            setTicketNumber(result.ticketNumber || 'Submitted');
+            const ticketNum = result.ticketNumber || 'Submitted';
+            setTicketNumber(ticketNum);
             setSubmitted(true);
+
+            // Send notification to Telegram
+            sendTelegramTicketNotification({
+                ...submissionData,
+                ticket_number: ticketNum,
+            }).catch(err => console.error('Telegram notification error:', err));
         }
         setLoading(false);
     };

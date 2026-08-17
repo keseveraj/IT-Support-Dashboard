@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Download, X, Calendar, Columns, Save, RotateCcw } from 'lucide-react';
+import { Download, X, Calendar, Columns, Save, RotateCcw, FileText, FileSpreadsheet, User } from 'lucide-react';
 import { Ticket } from '../types';
+import { exportTicketsToPDF } from '../services/pdfExportService';
 
 const STORAGE_KEY = 'csv_export_default_columns';
 
@@ -26,9 +27,12 @@ const COLUMN_OPTIONS = [
 ];
 
 const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => {
+    const [exportFormat, setExportFormat] = useState<'pdf' | 'csv'>('pdf');
     const [exportFrom, setExportFrom] = useState('');
     const [exportTo, setExportTo] = useState('');
     const [selectedMonth, setSelectedMonth] = useState('');
+    const [preparedBy, setPreparedBy] = useState('Raj');
+    const [reportTitle, setReportTitle] = useState('IT Ticketing Summary');
     const [selectedColumns, setSelectedColumns] = useState<Record<string, boolean>>(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -40,13 +44,15 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
 
     // Generate month options for the last 12 months
     const getMonthOptions = () => {
-        const months: { value: string; label: string }[] = [];
+        const months: { value: string; label: string; displayMonth: string }[] = [];
         const now = new Date();
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 18; i++) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            months.push({ value, label });
+            const monthName = d.toLocaleDateString('en-US', { month: 'long' });
+            const displayMonth = `${monthName}-${d.getFullYear()}`;
+            months.push({ value, label, displayMonth });
         }
         return months;
     };
@@ -130,7 +136,18 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
         }
     };
 
-    const handleExport = () => {
+    const getSelectedMonthLabel = () => {
+        if (selectedMonth) {
+            const found = getMonthOptions().find(m => m.value === selectedMonth);
+            if (found) return found.displayMonth;
+        }
+        if (exportFrom && exportTo) {
+            return `${exportFrom} to ${exportTo}`;
+        }
+        return 'All Months';
+    };
+
+    const handleExportCSV = () => {
         const exportTickets = getFilteredTickets();
         const activeCols = COLUMN_OPTIONS.filter(col => selectedColumns[col.key]);
 
@@ -165,12 +182,25 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
         onClose();
     };
 
+    const handleExportPDF = () => {
+        const exportTickets = getFilteredTickets();
+        if (exportTickets.length === 0) return;
+
+        exportTicketsToPDF(exportTickets, {
+            monthLabel: getSelectedMonthLabel(),
+            preparedBy: preparedBy || 'Raj',
+            customTitle: reportTitle || 'IT Ticketing Summary',
+        });
+
+        onClose();
+    };
+
     const filteredCount = getFilteredTickets().length;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}>
             <div
-                className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+                className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-white/10"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -181,7 +211,7 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Export Report</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Choose date range and columns</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Download Summary Report</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
@@ -189,12 +219,43 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
                     </button>
                 </div>
 
+                {/* Format Selector Tabs */}
+                <div className="px-6 pt-5">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Export Format</label>
+                    <div className="grid grid-cols-2 gap-2 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl">
+                        <button
+                            type="button"
+                            onClick={() => setExportFormat('pdf')}
+                            className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+                                exportFormat === 'pdf'
+                                    ? 'bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                        >
+                            <FileText size={17} />
+                            PDF Summary Report
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setExportFormat('csv')}
+                            className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+                                exportFormat === 'csv'
+                                    ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                        >
+                            <FileSpreadsheet size={17} />
+                            CSV Spreadsheet
+                        </button>
+                    </div>
+                </div>
+
                 <div className="p-6 space-y-6">
                     {/* Date Range Section */}
                     <div>
                         <div className="flex items-center gap-2 mb-3">
                             <Calendar size={18} className="text-emerald-600" />
-                            <h3 className="font-semibold text-gray-900 dark:text-white">Date Range</h3>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Select Month / Date Range</h3>
                         </div>
 
                         {/* Quick Month Select */}
@@ -205,7 +266,7 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
                                 onChange={(e) => handleMonthSelect(e.target.value)}
                                 className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-gray-900 dark:text-white"
                             >
-                                <option value="">All time</option>
+                                <option value="">All months (Full history)</option>
                                 {getMonthOptions().map(m => (
                                     <option key={m.value} value={m.value}>{m.label}</option>
                                 ))}
@@ -235,90 +296,131 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
                         </div>
                     </div>
 
-                    {/* Column Selection */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                                <Columns size={18} className="text-emerald-600" />
-                                <h3 className="font-semibold text-gray-900 dark:text-white">Columns</h3>
-                                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                                    {getSelectedColumnCount()} selected
-                                </span>
+                    {/* PDF Specific Settings */}
+                    {exportFormat === 'pdf' && (
+                        <div className="space-y-4 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Report Header Title</label>
+                                <input
+                                    type="text"
+                                    value={reportTitle}
+                                    onChange={(e) => setReportTitle(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-emerald-800 rounded-lg text-sm text-gray-900 dark:text-white font-medium"
+                                />
                             </div>
-                            <div className="flex gap-2 items-center">
-                                <button
-                                    onClick={selectAllColumns}
-                                    className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
-                                >
-                                    All
-                                </button>
-                                <span className="text-gray-300 dark:text-gray-600">|</span>
-                                <button
-                                    onClick={deselectAllColumns}
-                                    className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
-                                >
-                                    None
-                                </button>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Month Header Label</label>
+                                    <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700/80 rounded-lg text-xs font-mono text-gray-800 dark:text-gray-200 truncate">
+                                        {getSelectedMonthLabel()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Prepared By (Signature)</label>
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                                        <User size={14} className="text-emerald-600" />
+                                        <input
+                                            type="text"
+                                            value={preparedBy}
+                                            onChange={(e) => setPreparedBy(e.target.value)}
+                                            className="w-full bg-transparent text-sm text-gray-900 dark:text-white outline-none font-medium"
+                                            placeholder="Raj"
+                                        />
+                                    </div>
+                                </div>
                             </div>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                📄 Generates clean PDF with <b>Date, Category, Description, Requestor/User</b> and Raj's signature matching the official summary layout.
+                            </p>
                         </div>
+                    )}
 
-                        <div className="grid grid-cols-2 gap-2">
-                            {COLUMN_OPTIONS.map(col => (
-                                <label
-                                    key={col.key}
-                                    className={`flex items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-colors ${
-                                        selectedColumns[col.key]
-                                            ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
-                                            : 'bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                    }`}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedColumns[col.key]}
-                                        onChange={() => toggleColumn(col.key)}
-                                        className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
-                                    />
-                                    <span className={`text-sm ${
-                                        selectedColumns[col.key]
-                                            ? 'text-emerald-700 dark:text-emerald-300 font-medium'
-                                            : 'text-gray-600 dark:text-gray-400'
-                                    }`}>
-                                        {col.label}
+                    {/* Column Selection for CSV Mode */}
+                    {exportFormat === 'csv' && (
+                        <div>
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <Columns size={18} className="text-emerald-600" />
+                                    <h3 className="font-semibold text-gray-900 dark:text-white">CSV Columns</h3>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                        {getSelectedColumnCount()} selected
                                     </span>
-                                </label>
-                            ))}
-                        </div>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                    <button
+                                        onClick={selectAllColumns}
+                                        className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                                    >
+                                        All
+                                    </button>
+                                    <span className="text-gray-300 dark:text-gray-600">|</span>
+                                    <button
+                                        onClick={deselectAllColumns}
+                                        className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
+                                    >
+                                        None
+                                    </button>
+                                </div>
+                            </div>
 
-                        {/* Save / Reset defaults */}
-                        <div className="flex items-center gap-2 mt-3">
-                            <button
-                                onClick={saveAsDefault}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
-                            >
-                                <Save size={14} />
-                                Save as Default
-                            </button>
-                            <button
-                                onClick={resetDefaults}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                            >
-                                <RotateCcw size={14} />
-                                Reset
-                            </button>
-                            {savedMessage && (
-                                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
-                                    ✓ Defaults saved!
-                                </span>
-                            )}
+                            <div className="grid grid-cols-2 gap-2">
+                                {COLUMN_OPTIONS.map(col => (
+                                    <label
+                                        key={col.key}
+                                        className={`flex items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-colors ${
+                                            selectedColumns[col.key]
+                                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
+                                                : 'bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedColumns[col.key]}
+                                            onChange={() => toggleColumn(col.key)}
+                                            className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                                        />
+                                        <span className={`text-sm ${
+                                            selectedColumns[col.key]
+                                                ? 'text-emerald-700 dark:text-emerald-300 font-medium'
+                                                : 'text-gray-600 dark:text-gray-400'
+                                        }`}>
+                                            {col.label}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+
+                            {/* Save / Reset defaults */}
+                            <div className="flex items-center gap-2 mt-3">
+                                <button
+                                    onClick={saveAsDefault}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+                                >
+                                    <Save size={14} />
+                                    Save as Default
+                                </button>
+                                <button
+                                    onClick={resetDefaults}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                    <RotateCcw size={14} />
+                                    Reset
+                                </button>
+                                {savedMessage && (
+                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
+                                        ✓ Defaults saved!
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Footer */}
                 <div className="p-6 border-t border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-gray-800/50 rounded-b-2xl">
                     <div className="flex items-center justify-between mb-3">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                            <span className="font-semibold text-gray-900 dark:text-white">{filteredCount}</span> ticket{filteredCount !== 1 ? 's' : ''} will be exported
+                            <span className="font-semibold text-gray-900 dark:text-white">{filteredCount}</span> ticket{filteredCount !== 1 ? 's' : ''} ready to export
                         </p>
                     </div>
                     <div className="flex gap-3">
@@ -328,14 +430,26 @@ const ExportCSVModal: React.FC<ExportCSVModalProps> = ({ tickets, onClose }) => 
                         >
                             Cancel
                         </button>
-                        <button
-                            onClick={handleExport}
-                            disabled={getSelectedColumnCount() === 0 || filteredCount === 0}
-                            className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            <Download size={18} />
-                            Download CSV
-                        </button>
+                        
+                        {exportFormat === 'pdf' ? (
+                            <button
+                                onClick={handleExportPDF}
+                                disabled={filteredCount === 0}
+                                className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                <FileText size={18} />
+                                Download PDF
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleExportCSV}
+                                disabled={getSelectedColumnCount() === 0 || filteredCount === 0}
+                                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                <Download size={18} />
+                                Download CSV
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

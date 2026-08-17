@@ -110,10 +110,10 @@ const Tickets: React.FC = () => {
                 <div className="flex gap-3">
                     <button
                         onClick={() => setShowExportModal(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
                     >
                         <Download size={18} />
-                        Download CSV
+                        Export Report
                     </button>
                     <a
                         href="/submit"
