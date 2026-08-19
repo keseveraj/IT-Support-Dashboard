@@ -103,6 +103,65 @@ export const updateTicketStatus = async (id: string, status: string): Promise<vo
   }
 };
 
+// Update full ticket fields (for edit)
+export const updateTicket = async (id: string, updates: Partial<Ticket>): Promise<{ success: boolean; error?: string }> => {
+  // Update localStorage
+  const locals = getStoredTickets();
+  const updatedLocals = locals.map(t =>
+    t.id === id || t.ticket_number === id ? { ...t, ...updates } : t
+  );
+  saveStoredTickets(updatedLocals);
+
+  // Sync to Supabase
+  if (supabase) {
+    try {
+      await supabase.from('tickets').update(updates).eq('id', id);
+    } catch (e) {
+      console.warn('Supabase update ticket failed:', e);
+    }
+  }
+  return { success: true };
+};
+
+// Delete a ticket by id
+export const deleteTicket = async (id: string): Promise<{ success: boolean; error?: string }> => {
+  // Remove from localStorage
+  const locals = getStoredTickets();
+  saveStoredTickets(locals.filter(t => t.id !== id && t.ticket_number !== id));
+
+  // Delete from Supabase
+  if (supabase) {
+    try {
+      await supabase.from('tickets').delete().eq('id', id);
+    } catch (e) {
+      console.warn('Supabase delete ticket failed:', e);
+    }
+  }
+  return { success: true };
+};
+
+// Clear test/dummy tickets (tickets with user_name containing 'test' or 'Test', case-insensitive)
+export const clearTestTickets = async (): Promise<number> => {
+  const locals = getStoredTickets();
+  const isTest = (t: Ticket) =>
+    /^test$/i.test(t.user_name?.trim() || '') ||
+    (t.user_email?.toLowerCase().includes('test@') ?? false) ||
+    (t.description?.toLowerCase().startsWith('test') && t.user_name?.toLowerCase() === 'test');
+  const testTickets = locals.filter(isTest);
+  const cleaned = locals.filter(t => !isTest(t));
+  saveStoredTickets(cleaned);
+
+  // Remove from Supabase
+  if (supabase) {
+    for (const t of testTickets) {
+      try {
+        await supabase.from('tickets').delete().eq('id', t.id);
+      } catch (e) { /* silent */ }
+    }
+  }
+  return testTickets.length;
+};
+
 // Create a new ticket (for public submission form)
 interface CreateTicketData {
   user_name: string;
