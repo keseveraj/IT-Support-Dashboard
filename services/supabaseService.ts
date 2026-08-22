@@ -79,9 +79,32 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   if (supabase) {
     try {
       const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         const remoteIds = new Set(data.map(d => d.id || d.ticket_number));
         const uniqueLocals = localTickets.filter(lt => !remoteIds.has(lt.id) && !remoteIds.has(lt.ticket_number));
+        
+        // Auto-sync local tickets up to Supabase so other browsers get them!
+        if (uniqueLocals.length > 0) {
+          for (const localT of uniqueLocals) {
+            try {
+              await supabase.from('tickets').insert({
+                ticket_number: localT.ticket_number || localT.id,
+                user_name: localT.user_name,
+                user_email: localT.user_email,
+                company_name: localT.company_name || null,
+                department: localT.department || null,
+                computer_name: localT.computer_name || null,
+                issue_type: localT.issue_type,
+                priority: localT.priority || 'Normal',
+                status: localT.status || 'New',
+                description: localT.description,
+                created_at: localT.created_at,
+                comments: JSON.stringify(localT.comments || [])
+              });
+            } catch (e) {}
+          }
+        }
+
         const combined = [...uniqueLocals, ...data] as Ticket[];
         saveStoredTickets(combined);
         return combined;

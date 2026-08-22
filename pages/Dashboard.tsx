@@ -175,10 +175,28 @@ const Dashboard: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400 mt-1 pl-9">Overview of entire IT infrastructure</p>
         </div>
         <div className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 px-4 py-2 rounded-xl border border-gray-100 dark:border-white/5">
-          <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">KD</div>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+            {(() => {
+              try {
+                const u = JSON.parse(localStorage.getItem('it_dashboard_user') || '{}');
+                return (u.name || 'Raj').charAt(0).toUpperCase();
+              } catch {
+                return 'R';
+              }
+            })()}
+          </div>
           <div className="text-sm">
-            <p className="font-semibold text-gray-900 dark:text-white">kesev@company.com</p>
-            <p className="text-xs text-gray-500">Admin</p>
+            <p className="font-semibold text-gray-900 dark:text-white">
+              {(() => {
+                try {
+                  const u = JSON.parse(localStorage.getItem('it_dashboard_user') || '{}');
+                  return u.email || 'itsupport@graduanbersatu.com';
+                } catch {
+                  return 'itsupport@graduanbersatu.com';
+                }
+              })()}
+            </p>
+            <p className="text-xs text-gray-500">IT Support Lead</p>
           </div>
         </div>
       </div>
