@@ -94,7 +94,16 @@ export async function createOnboardingRequest(data: Partial<OnboardingRequest>):
             description: `Onboarding request for ${data.employee_name} (${data.position}). HOD: ${data.hod_name} (${data.hod_email}). Requires: ${requirementsList || 'Standard Setup'}.`,
         }).catch(console.warn);
 
-        // 3. Sync to Supabase if connected
+        // 3. Try serverless fallback cloud sync
+        try {
+            fetch('/api/onboarding', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+            }).catch(() => {});
+        } catch (e) {}
+
+        // 4. Sync to Supabase if connected
         if (supabase) {
             try {
                 const { data: dbRequest, error } = await supabase
@@ -127,11 +136,25 @@ export async function getOnboardingRequests(statusFilter?: string): Promise<Onbo
         const res = await fetch('/api/onboarding', { signal: AbortSignal.timeout(5000) });
         if (res.ok) {
             const result = await res.json();
-            if (result.success && result.data && result.data.length > 0) {
-                const remoteIds = new Set(result.data.map((d: any) => d.id || d.request_number));
+            if (result.success && result.data) {
+                const remoteData = result.data || [];
+                const remoteIds = new Set(remoteData.map((d: any) => d.id || d.request_number));
                 const uniqueLocals = localRequests.filter(lr => !remoteIds.has(lr.id) && !remoteIds.has(lr.request_number));
-                const combined = [...uniqueLocals, ...result.data] as OnboardingRequest[];
+                
+                // Auto-sync local requests UP to the serverless API
+                if (uniqueLocals.length > 0) {
+                    try {
+                        await fetch('/api/onboarding', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(uniqueLocals)
+                        });
+                    } catch (e) {}
+                }
+                
+                const combined = [...uniqueLocals, ...remoteData] as OnboardingRequest[];
                 saveStoredOnboarding(combined);
+                
                 if (statusFilter && statusFilter !== 'All') {
                     return combined.filter(r => r.status === statusFilter);
                 }
@@ -201,8 +224,19 @@ export async function getRequestByToken(token: string): Promise<OnboardingReques
 export async function updateRequestStatus(id: string, status: string): Promise<boolean> {
     try {
         const localList = getStoredOnboarding();
-        const updatedLocals = localList.map(r => r.id === id || r.request_number === id ? { ...r, status } : r);
+        const updatedLocals = localList.map(r => r.id === id || r.request_number === id ? { ...r, status, updated_at: new Date().toISOString(), completed_at: status === 'Completed' ? new Date().toISOString() : r.completed_at } : r);
         saveStoredOnboarding(updatedLocals);
+
+        try {
+            const fullReq = updatedLocals.find(r => r.id === id || r.request_number === id);
+            if (fullReq) {
+                await fetch('/api/onboarding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(fullReq)
+                });
+            }
+        } catch (e) {}
 
         if (supabase) {
             const updateData: any = { status, updated_at: new Date().toISOString() };
@@ -253,6 +287,17 @@ export async function approveOrRejectRequest(
             return r;
         });
         saveStoredOnboarding(updatedLocals);
+
+        try {
+            const fullReq = updatedLocals.find(r => r.approval_token === token);
+            if (fullReq) {
+                await fetch('/api/onboarding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(fullReq)
+                });
+            }
+        } catch (e) {}
 
         // 2. Sync to Supabase if connected
         if (supabase) {
