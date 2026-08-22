@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu, Search, Bell, Sun, Moon } from 'lucide-react';
+import { UserProfile } from '../App';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,10 +10,15 @@ interface LayoutProps {
   onLogout: () => void;
   toggleTheme: () => void;
   isDark: boolean;
+  user?: UserProfile;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigate, onLogout, toggleTheme, isDark }) => {
+const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigate, onLogout, toggleTheme, isDark, user }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const userName = user?.name || 'Raj';
+  const userRole = user?.role || 'IT Support Lead';
+  const userInitial = userName.charAt(0).toUpperCase() || 'R';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex transition-colors duration-200">
@@ -24,6 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigate, onLo
         }}
         onLogout={onLogout}
         isOpen={isMobileMenuOpen}
+        user={user}
       />
 
       {/* Overlay for mobile menu */}
@@ -66,6 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigate, onLo
             <button 
               onClick={toggleTheme}
               className="p-2.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full text-gray-500 dark:text-gray-400 transition-colors"
+              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -77,12 +85,15 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigate, onLo
 
             <div className="w-px h-8 bg-gray-200 dark:bg-white/10 mx-2 hidden md:block"></div>
             
+            {/* Header User Profile with Stable Avatar Initials Badge */}
             <div className="flex items-center gap-3 hidden md:flex">
               <div className="text-right">
-                <p className="text-sm font-bold text-gray-900 dark:text-white leading-none">Admin User</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">IT Support Lead</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white leading-none">{userName}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{userRole}</p>
               </div>
-              <img src="https://picsum.photos/100" className="w-10 h-10 rounded-full border-2 border-gray-100 dark:border-white/10" alt="Avatar" />
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-base shadow-sm border-2 border-white dark:border-white/10 ring-2 ring-emerald-500/20">
+                {userInitial}
+              </div>
             </div>
           </div>
         </header>

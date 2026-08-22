@@ -58,14 +58,33 @@ const saveStoredTickets = (tickets: Ticket[]) => {
 export const fetchTickets = async (): Promise<Ticket[]> => {
   const localTickets = getStoredTickets();
   
+  // 1. Try serverless cloud sync endpoint
+  try {
+    const res = await fetch('/api/tickets', { signal: AbortSignal.timeout(5000) });
+    if (res.ok) {
+      const result = await res.json();
+      if (result.success && result.data && result.data.length > 0) {
+        const remoteIds = new Set(result.data.map((d: any) => d.id || d.ticket_number));
+        const uniqueLocals = localTickets.filter(lt => !remoteIds.has(lt.id) && !remoteIds.has(lt.ticket_number));
+        const combined = [...uniqueLocals, ...result.data] as Ticket[];
+        saveStoredTickets(combined);
+        return combined;
+      }
+    }
+  } catch (e) {
+    // API endpoint unreachable or running in isolated dev
+  }
+
+  // 2. Direct Supabase query if connected
   if (supabase) {
     try {
       const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
       if (!error && data && data.length > 0) {
-        // Merge remote and local (avoiding duplicates by id)
         const remoteIds = new Set(data.map(d => d.id || d.ticket_number));
         const uniqueLocals = localTickets.filter(lt => !remoteIds.has(lt.id) && !remoteIds.has(lt.ticket_number));
-        return [...uniqueLocals, ...data] as Ticket[];
+        const combined = [...uniqueLocals, ...data] as Ticket[];
+        saveStoredTickets(combined);
+        return combined;
       }
     } catch (e) {
       console.warn('Supabase fetch tickets failed, using local tickets:', e);
@@ -128,6 +147,11 @@ export const deleteTicket = async (id: string): Promise<{ success: boolean; erro
   // Remove from localStorage
   const locals = getStoredTickets();
   saveStoredTickets(locals.filter(t => t.id !== id && t.ticket_number !== id));
+
+  // Call serverless delete
+  try {
+    await fetch(`/api/tickets?id=${encodeURIComponent(id)}`, { method: 'DELETE', signal: AbortSignal.timeout(4000) });
+  } catch (e) {}
 
   // Delete from Supabase
   if (supabase) {

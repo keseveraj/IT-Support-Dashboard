@@ -122,6 +122,25 @@ export async function createOnboardingRequest(data: Partial<OnboardingRequest>):
 export async function getOnboardingRequests(statusFilter?: string): Promise<OnboardingRequest[]> {
     const localRequests = getStoredOnboarding();
 
+    // 1. Try serverless cloud sync endpoint
+    try {
+        const res = await fetch('/api/onboarding', { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+            const result = await res.json();
+            if (result.success && result.data && result.data.length > 0) {
+                const remoteIds = new Set(result.data.map((d: any) => d.id || d.request_number));
+                const uniqueLocals = localRequests.filter(lr => !remoteIds.has(lr.id) && !remoteIds.has(lr.request_number));
+                const combined = [...uniqueLocals, ...result.data] as OnboardingRequest[];
+                saveStoredOnboarding(combined);
+                if (statusFilter && statusFilter !== 'All') {
+                    return combined.filter(r => r.status === statusFilter);
+                }
+                return combined;
+            }
+        }
+    } catch (e) {}
+
+    // 2. Direct Supabase query
     if (supabase) {
         try {
             let query = supabase
@@ -137,7 +156,9 @@ export async function getOnboardingRequests(statusFilter?: string): Promise<Onbo
             if (!error && data && data.length > 0) {
                 const remoteIds = new Set(data.map(d => d.id || d.request_number));
                 const uniqueLocals = localRequests.filter(lr => !remoteIds.has(lr.id) && !remoteIds.has(lr.request_number));
-                return [...uniqueLocals, ...data];
+                const combined = [...uniqueLocals, ...data] as OnboardingRequest[];
+                saveStoredOnboarding(combined);
+                return combined;
             }
         } catch (e) {
             console.warn('Supabase fetch onboarding requests failed, using local:', e);

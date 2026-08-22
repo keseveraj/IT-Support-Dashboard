@@ -16,14 +16,55 @@ import Layout from './components/Layout';
 import ChatbotWidget from './components/ChatbotWidget';
 import { supabase } from './services/supabaseService';
 
+export interface UserProfile {
+  name: string;
+  email: string;
+  role: string;
+}
+
+// Session timeout: 12 hours (in milliseconds)
+const SESSION_TIMEOUT_MS = 12 * 60 * 60 * 1000;
+
+const DEFAULT_USER: UserProfile = {
+  name: 'Raj',
+  email: 'itsupport@graduanbersatu.com',
+  role: 'IT Support Lead',
+};
+
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('it_dashboard_auth') === 'true';
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
+    try {
+      const raw = localStorage.getItem('it_dashboard_user');
+      return raw ? JSON.parse(raw) : DEFAULT_USER;
+    } catch {
+      return DEFAULT_USER;
+    }
   });
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      const rawSession = localStorage.getItem('it_dashboard_session');
+      if (rawSession) {
+        const session = JSON.parse(rawSession);
+        if (session.expiresAt && Date.now() > session.expiresAt) {
+          // Session expired
+          localStorage.removeItem('it_dashboard_session');
+          localStorage.removeItem('it_dashboard_auth');
+          return false;
+        }
+        return session.isAuthenticated === true;
+      }
+      return localStorage.getItem('it_dashboard_auth') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [currentPage, setCurrentPage] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('page') || 'dashboard';
   });
+
   const [isDark, setIsDark] = useState<boolean>(() => {
     return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
@@ -33,6 +74,28 @@ const App: React.FC = () => {
   const isOnboardingPage = window.location.pathname === '/onboarding';
   const isApprovePage = window.location.pathname.startsWith('/approve/');
 
+  // Periodic session expiration check (checks every minute)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      try {
+        const rawSession = localStorage.getItem('it_dashboard_session');
+        if (rawSession) {
+          const session = JSON.parse(rawSession);
+          if (session.expiresAt && Date.now() > session.expiresAt) {
+            console.log('Session expired due to inactivity timeout (12 hours). Logging out.');
+            handleLogout();
+          }
+        }
+      } catch (e) {
+        console.warn('Session expiration check error:', e);
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   useEffect(() => {
     // Check Supabase session
     const checkSession = async () => {
@@ -41,7 +104,7 @@ const App: React.FC = () => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             setIsAuthenticated(true);
-            localStorage.setItem('it_dashboard_auth', 'true');
+            saveSession(currentUser);
           }
         } catch (e) {
           console.warn('Session check warning:', e);
@@ -56,7 +119,14 @@ const App: React.FC = () => {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session) {
           setIsAuthenticated(true);
-          localStorage.setItem('it_dashboard_auth', 'true');
+          const email = session.user?.email || 'itsupport@graduanbersatu.com';
+          const userObj = {
+            name: 'Raj',
+            email,
+            role: 'IT Support Lead'
+          };
+          setCurrentUser(userObj);
+          saveSession(userObj);
         }
       });
 
@@ -79,13 +149,34 @@ const App: React.FC = () => {
     setIsDark(prev => !prev);
   };
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
+  const saveSession = (user: UserProfile) => {
+    const expiresAt = Date.now() + SESSION_TIMEOUT_MS;
+    const sessionData = {
+      isAuthenticated: true,
+      user,
+      loginTime: Date.now(),
+      expiresAt,
+    };
+    localStorage.setItem('it_dashboard_session', JSON.stringify(sessionData));
     localStorage.setItem('it_dashboard_auth', 'true');
+    localStorage.setItem('it_dashboard_user', JSON.stringify(user));
+  };
+
+  const handleLogin = (user?: Partial<UserProfile>) => {
+    const updatedUser: UserProfile = {
+      name: user?.name || 'Raj',
+      email: user?.email || 'itsupport@graduanbersatu.com',
+      role: user?.role || 'IT Support Lead',
+    };
+    setCurrentUser(updatedUser);
+    setIsAuthenticated(true);
+    saveSession(updatedUser);
   };
 
   const handleLogout = async () => {
     localStorage.removeItem('it_dashboard_auth');
+    localStorage.removeItem('it_dashboard_session');
+    localStorage.removeItem('it_dashboard_user');
     if (supabase) {
       try {
         await supabase.auth.signOut();
@@ -136,6 +227,7 @@ const App: React.FC = () => {
         onLogout={handleLogout}
         toggleTheme={toggleTheme}
         isDark={isDark}
+        user={currentUser}
       >
         {renderPage()}
       </Layout>

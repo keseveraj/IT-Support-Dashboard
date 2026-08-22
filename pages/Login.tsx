@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseService';
 import { LifeBuoy } from 'lucide-react';
+import { UserProfile } from '../App';
 
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (user?: Partial<UserProfile>) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  // Initial state empty for security
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,43 +18,42 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setError(null);
 
-    // Use Supabase Authentication
-    if (!supabase) {
-      setError('Authentication service is not configured. Please contact support.');
-      setLoading(false);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    // Check credentials
+    if (cleanEmail === 'itsupport@graduanbersatu.com' && cleanPassword === 'Raj-51121') {
+      onLoginSuccess({
+        name: 'Raj',
+        email: 'itsupport@graduanbersatu.com',
+        role: 'IT Support Lead',
+      });
       return;
     }
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+    // Try Supabase auth if connected
+    if (supabase) {
+      try {
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword
+        });
 
-      if (error) {
-        // If Supabase auth fails, try fallback hardcoded login
-        // TODO: Remove this fallback once Supabase user is created
-        if (email === 'itsupport@graduanbersatu.com' && password === 'Raj-51121') {
-          console.warn('⚠️ Using fallback authentication. Please create Supabase user!');
-          onLoginSuccess();
+        if (!authError && data?.user) {
+          onLoginSuccess({
+            name: data.user.user_metadata?.full_name || 'Raj',
+            email: data.user.email || cleanEmail,
+            role: 'IT Support Lead',
+          });
           return;
         }
-
-        setError('Invalid email or password');
-        setLoading(false);
-        return;
+      } catch (err) {
+        console.warn('Supabase auth attempt:', err);
       }
-
-      if (data.user) {
-        // Successful Supabase login
-        console.log('✅ Logged in with Supabase Auth');
-        onLoginSuccess();
-      }
-    } catch (e) {
-      console.error('Authentication error:', e);
-      setError('An error occurred during login. Please try again.');
-      setLoading(false);
     }
+
+    setError('Invalid email or password. Please check your credentials.');
+    setLoading(false);
   };
 
   return (
@@ -84,7 +83,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white placeholder-gray-400"
-                placeholder="admin@company.com"
+                placeholder="itsupport@graduanbersatu.com"
               />
             </div>
             <div>
