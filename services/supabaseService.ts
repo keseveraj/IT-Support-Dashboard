@@ -58,15 +58,28 @@ const saveStoredTickets = (tickets: Ticket[]) => {
 export const fetchTickets = async (): Promise<Ticket[]> => {
   const localTickets = getStoredTickets();
   
-  // 1. Try serverless cloud sync endpoint
+  // 1. Try serverless cloud sync endpoint (which has the REST fallback built-in)
   try {
     const res = await fetch('/api/tickets', { signal: AbortSignal.timeout(5000) });
     if (res.ok) {
       const result = await res.json();
-      if (result.success && result.data && result.data.length > 0) {
-        const remoteIds = new Set(result.data.map((d: any) => d.id || d.ticket_number));
+      if (result.success && result.data) {
+        const remoteData = result.data || [];
+        const remoteIds = new Set(remoteData.map((d: any) => d.id || d.ticket_number));
         const uniqueLocals = localTickets.filter(lt => !remoteIds.has(lt.id) && !remoteIds.has(lt.ticket_number));
-        const combined = [...uniqueLocals, ...result.data] as Ticket[];
+        
+        // Auto-sync local tickets UP to the serverless API
+        if (uniqueLocals.length > 0) {
+          try {
+            await fetch('/api/tickets', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(uniqueLocals)
+            });
+          } catch (e) {}
+        }
+        
+        const combined = [...uniqueLocals, ...remoteData] as Ticket[];
         saveStoredTickets(combined);
         return combined;
       }
@@ -135,6 +148,18 @@ export const updateTicketStatus = async (id: string, status: string): Promise<vo
   const updatedLocals = locals.map(t => t.id === id || t.ticket_number === id ? { ...t, status: status as any } : t);
   saveStoredTickets(updatedLocals);
 
+  // Sync to fallback API
+  try {
+    const fullTicket = updatedLocals.find(t => t.id === id || t.ticket_number === id);
+    if (fullTicket) {
+      await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullTicket)
+      });
+    }
+  } catch (e) {}
+
   // Update remote Supabase if available
   if (supabase) {
     try {
@@ -153,6 +178,18 @@ export const updateTicket = async (id: string, updates: Partial<Ticket>): Promis
     t.id === id || t.ticket_number === id ? { ...t, ...updates } : t
   );
   saveStoredTickets(updatedLocals);
+
+  // Sync to fallback API
+  try {
+    const fullTicket = updatedLocals.find(t => t.id === id || t.ticket_number === id);
+    if (fullTicket) {
+      await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullTicket)
+      });
+    }
+  } catch (e) {}
 
   // Sync to Supabase
   if (supabase) {
@@ -254,6 +291,15 @@ export const createTicket = async (ticketData: CreateTicketData): Promise<{ succ
   // 1. Always save to local storage immediately
   const existing = getStoredTickets();
   saveStoredTickets([newTicket, ...existing]);
+
+  // 1.5 Try to sync to the serverless endpoint (which uses the fallback cloud store)
+  try {
+    fetch('/api/tickets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newTicket)
+    }).catch(() => {});
+  } catch (e) {}
 
   // 2. Try to sync to Supabase if connected
   if (supabase) {
