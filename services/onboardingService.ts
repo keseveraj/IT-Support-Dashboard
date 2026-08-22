@@ -15,7 +15,10 @@ const getStoredOnboarding = (): OnboardingRequest[] => {
 
 const saveStoredOnboarding = (requests: OnboardingRequest[]) => {
     try {
-        localStorage.setItem(LOCAL_ONBOARDING_KEY, JSON.stringify(requests));
+        const uniqueMap = new Map<string, OnboardingRequest>();
+        requests.forEach(r => uniqueMap.set(r.id || r.request_number, r));
+        const uniqueRequests = Array.from(uniqueMap.values());
+        localStorage.setItem(LOCAL_ONBOARDING_KEY, JSON.stringify(uniqueRequests));
     } catch (e) {
         console.error('Failed to save onboarding requests to localStorage:', e);
     }
@@ -133,7 +136,7 @@ export async function getOnboardingRequests(statusFilter?: string): Promise<Onbo
 
     // 1. Try serverless cloud sync endpoint
     try {
-        const res = await fetch('/api/onboarding', { signal: AbortSignal.timeout(5000) });
+        const res = await fetch('/api/onboarding', { signal: AbortSignal.timeout(5000), cache: 'no-store' });
         if (res.ok) {
             const result = await res.json();
             if (result.success && result.data) {

@@ -49,7 +49,10 @@ const getStoredTickets = (): Ticket[] => {
 
 const saveStoredTickets = (tickets: Ticket[]) => {
   try {
-    localStorage.setItem(LOCAL_TICKETS_KEY, JSON.stringify(tickets));
+    const uniqueMap = new Map<string, Ticket>();
+    tickets.forEach(t => uniqueMap.set(t.id || t.ticket_number, t));
+    const uniqueTickets = Array.from(uniqueMap.values());
+    localStorage.setItem(LOCAL_TICKETS_KEY, JSON.stringify(uniqueTickets));
   } catch (e) {
     console.error('Failed to save tickets to localStorage:', e);
   }
@@ -60,7 +63,7 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   
   // 1. Try serverless cloud sync endpoint (which has the REST fallback built-in)
   try {
-    const res = await fetch('/api/tickets', { signal: AbortSignal.timeout(5000) });
+    const res = await fetch('/api/tickets', { signal: AbortSignal.timeout(5000), cache: 'no-store' });
     if (res.ok) {
       const result = await res.json();
       if (result.success && result.data) {

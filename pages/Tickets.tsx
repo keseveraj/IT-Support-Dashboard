@@ -318,12 +318,12 @@ const Tickets: React.FC = () => {
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Priority</th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Status</th>
                                     <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Created</th>
-                                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300 sticky right-0 bg-white dark:bg-dark-card shadow-[-4px_0_15px_-5px_rgba(0,0,0,0.1)]">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                                 {filteredTickets.map((ticket) => (
-                                    <tr key={ticket.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                    <tr key={ticket.id} className="group hover:bg-gray-50 dark:hover:bg-[#202124] transition-colors">
                                         <td className="px-6 py-4 text-sm font-mono text-gray-600 dark:text-gray-400">
                                             {String(ticket.id).substring(0, 8)}...
                                         </td>
@@ -346,10 +346,12 @@ const Tickets: React.FC = () => {
                                                 {ticket.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">
-                                            {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
-                                        </td>
                                         <td className="px-6 py-4">
+                                            <span className="text-xs font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">
+                                                {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 sticky right-0 bg-white dark:bg-[#1a1b1e] shadow-[-4px_0_15px_-5px_rgba(0,0,0,0.1)] group-hover:bg-gray-50 dark:group-hover:bg-[#202124] transition-colors">
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={() => setSelectedTicket(ticket)}
